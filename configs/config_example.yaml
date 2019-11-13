@@ -1,0 +1,9 @@
+#Configuration example
+
+logger:
+    name: prod_strl_eth-btc_h
+    level: INFO
+
+strategy:
+    name: maker
+
