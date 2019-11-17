@@ -81,5 +81,5 @@ class market_maker(strategy_interface):
     async on_market_update(self):
         pass
 
-    async on_market_update(self):
+    async run(self):
         pass
