@@ -1,3 +1,0 @@
-
-class maker:
-    pass

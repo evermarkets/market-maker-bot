@@ -38,10 +38,7 @@ def start_engine():
         logger_name = cfg.logger.name
     except Exception:
         logger_name = None
-    if logger_name is None:
-        logger_name = "strela"
-        for elem in cfg.adapters:
-            logger_name += "_" + cfg.adapters[elem].name + "_" + cfg.adapters[elem].execution.symbol
+        logger_name = "mm_bot"
 
     logger = setup_logging(cfg, logger_name)
     logger.info("Configurations: %s", json.dumps(cfg))

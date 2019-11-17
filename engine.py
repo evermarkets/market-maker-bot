@@ -1,17 +1,21 @@
 import asyncio
 import traceback
-from strategy.maker import maker
+
+from strategy.maker import market_maker
+from gateway.emx.adapter import emx_adapter
 
 from logger import logging
 
 strategies_factory = {
-    "maker": maker,
+    "market_maker": market_maker,
 }
 
 
 class Engine:
     def __init__(self, cfg):
         self.logger = logging.getLogger()
+
+        self.exchange_adapter = emx_adapter(cfg.adapter)
 
     def run(self):
         self.logger.info("Engine is strated")
