@@ -3,8 +3,7 @@ import json
 import asyncio
 import aiohttp
 
-from molva.common import makar_logging
-
+from logger import logging
 
 class websocket_client():
     def __init__(self, exchange_name=None):
@@ -12,7 +11,7 @@ class websocket_client():
         self.session = None
         self.exchange_name = exchange_name
 
-        self.logger = makar_logging.getLogger()
+        self.logger = logging.getLogger()
 
     def create_client_session(self):
         try:

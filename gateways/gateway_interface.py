@@ -4,8 +4,8 @@ import json
 import aiohttp
 import asyncio
 
-from common.definitions import api_result
-import molva.common.makar_logging as makar_logging
+from definitions import api_result
+from logger import logging
 
 
 class gateway_interface(abc.ABC):
@@ -24,22 +24,10 @@ class gateway_interface(abc.ABC):
         self.reconnecting = False
         self.ready_to_listen = asyncio.Event()
 
-        self.logger = makar_logging.getLogger()
-
-    @abc.abstractmethod
-    def get_exch_order_id(self, client_order_id):
-        pass
+        self.logger = logging.getLogger()
 
     @abc.abstractmethod
     async def set_order_update_callback(self, msg_callback):
-        pass
-
-    @abc.abstractmethod
-    async def request_position(self, order) -> api_result:
-        pass
-
-    @abc.abstractmethod
-    async def request_balance(self, order) -> api_result:
         pass
 
     async def request_orders(self) -> api_result:

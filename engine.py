@@ -1,8 +1,8 @@
 import asyncio
 import traceback
 
-from strategy.maker import market_maker
-from gateway.emx.adapter import emx_adapter
+from strategy.market_maker import market_maker
+from gateways.emx.adapter import emx_adapter
 
 from logger import logging
 

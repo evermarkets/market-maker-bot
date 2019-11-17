@@ -14,6 +14,20 @@ class market_maker(strategy_interface):
 
         self.cancel_all_request_was_sent = False
 
+    def _load_configuration(self, cfg):
+        option_names = (
+            "instrument_name",
+            "tick_size",
+            "stop_strategy_on_error",
+            "cancel_orders_on_reconnection",
+        )
+        for option_name in option_names:
+            option = getattr(cfg, option_name)
+            if option is None:
+                self.logger.error("%s was not found", option_name)
+                raise Misconfiguration("{0} was not found".format(option_name))
+            setattr(self, option_name, option)
+
     async def handle_exception(self, err_msg):
 
         #TODO chec this
@@ -64,22 +78,8 @@ class market_maker(strategy_interface):
 
         await self.exchange_adapter.reconnect()
 
-    def _load_configuration(self, cfg):
-        option_names = (
-            "instrument_name",
-            "tick_size",
-            "stop_strategy_on_error",
-            "cancel_orders_on_reconnection",
-        )
-        for option_name in option_names:
-            option = getattr(cfg, option_name)
-            if option is None:
-                self.logger.error("%s was not found", option_name)
-                raise Misconfiguration("{0} was not found".format(option_name))
-            setattr(self, option_name, option)
-
-    async on_market_update(self):
+    async def on_market_update(self):
         pass
 
-    async run(self):
+    async def run(self):
         pass

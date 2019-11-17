@@ -7,3 +7,11 @@ logger:
 strategy:
     name: maker
 
+adapter:
+    api_key:
+    api_secret:
+    streaming:
+        url: wss://api.alpha.emx.com
+    execution:
+        url: http://api.alpha.emx.com
+
