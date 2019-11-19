@@ -1,12 +1,12 @@
 import time
 import datetime
-from gateways.emx.auth import auth
 
 from logger import logging
+from definitions import market_price_update, exchange_orders, exchange_order
 
 
 class streaming_adapter():
-    def __init__(self, config, ws, shared_storage):
+    def __init__(self, config, auth, ws, shared_storage):
         self.logger = logging.getLogger()
 
         self.config = config
@@ -15,7 +15,7 @@ class streaming_adapter():
 
         self.symbol = self.config.symbol
 
-        self.auth = auth(self.config)
+        self.auth = auth
 
         self.subscribed = False
         self.orders_received = False
@@ -53,23 +53,9 @@ class streaming_adapter():
         endpoint = "/v1/user/verify"
         signature = self.auth.generate_signature(timestamp, "GET", endpoint, None)
 
-        msgs = []
-
-        if self.btcusd_product:
-            msgs.append(
-                        {
-                            "type": "subscribe",
-                            "contract_codes": [self.btcusd_product],
-                            "channels": ["ticker"],
-                            "key": self.auth.api_key,
-                            "sig": signature.decode().strip(),
-                            "timestamp": timestamp
-                        }
-                       )
-
         msg = {
                 "type": "subscribe",
-                "channels": ["orders", "trading", "ticker", "positions"],
+                "channels": ["orders", "trading", "ticker"],
                 "key": self.auth.api_key,
                 "sig": signature.decode().strip(),
                 "timestamp": timestamp
@@ -78,11 +64,10 @@ class streaming_adapter():
             msg["contract_codes"] = self.config.symbol
         else:
             msg["contract_codes"] = []
-        msgs.append(msg)
-        return msgs
+        return [msg]
 
     async def process(self, msg, msg_callback):
-        self.logger.debug("Emx streaming got a msg: {}".format(msg))
+        self.logger.info("Emx streaming got a msg: {}".format(msg))
 
         if msg.get("type") == "subscriptions":
             self.subscribed = True
@@ -93,17 +78,17 @@ class streaming_adapter():
             try:
                 msg = msg["data"]
             except KeyError:
-                raise GatewayError("Unable to parse data")
+                raise Exception("Unable to parse data")
 
             try:
                 res = self.process_active_orders(msg)
             except Exception as err:
-                raise GatewayError("process_event raised an exception. Reason: {}".format(str(err)))
+                raise Exception("process_event raised an exception. Reason: {}".format(str(err)))
 
             if res:
                 if msg_callback is None:
                     return
-                await msg_callback(res, self.config.exchange_name)
+                await msg_callback(res)
 
             return
 
@@ -116,7 +101,7 @@ class streaming_adapter():
             if msg_callback is None or res is None:
                 return
 
-            await msg_callback(res, self.config.exchange_name)
+            await msg_callback(res)
             return
             
 
@@ -124,7 +109,7 @@ class streaming_adapter():
             try:
                 res = self.process_tick(msg)
             except KeyError as err:
-                raise GatewayError("{} Ticker processing failed: {}".format(self.config.exchange_name, err))
+                raise Exception("{} Ticker processing failed: {}".format(self.config.exchange_name, err))
             if res is None:
                 self.logger.warning("process_tick returned None")
                 return
@@ -136,7 +121,7 @@ class streaming_adapter():
 
             if msg_callback is None:
                 return
-            await msg_callback(res, self.config.exchange_name)
+            await msg_callback(res)
             return
 
         if msg.get("channel") != "orders":
@@ -160,18 +145,18 @@ class streaming_adapter():
         try:
             msg = msg["data"]
         except KeyError:
-            raise GatewayError("Unable to parse data")
+            raise Exception("Unable to parse data")
 
         try:
             res = process_event(msg)
         except Exception as err:
-            raise GatewayError("process_event raised an exception. Reason: {}".format(str(err)))
+            raise Exception("process_event raised an exception. Reason: {}".format(str(err)))
 
         if res:
             if msg_callback is None:
                 self.logger.warning("No msg callback found for EMX adapter")
                 return
-            await msg_callback(res, self.config.exchange_name)
+            await msg_callback(res)
 
     def process_active_orders(self, msg):
         self.logger.info("process_active_orders started. Msg = {}".format(msg))
@@ -192,7 +177,7 @@ class streaming_adapter():
             exch_ord.price = float(elem["price"])
 
             if elem["order_type"] != "market" and elem["order_type"] != "limit":
-                raise GatewayError("Unable to get order type")
+                raise Exception("Unable to get order type")
             exch_ord.type = order_type.mkt if elem["order_type"] == "market" else order_type.limit
             exch_ord.exchange_orderid = elem["order_id"]
 
@@ -263,7 +248,7 @@ class streaming_adapter():
         try:
             eid = msg["order_id"]
         except KeyError:
-            raise GatewayError("Unable to parse eid")
+            raise Exception("Unable to parse eid")
 
         uid = "0"  # this is checked in strela/orders_manager
         try:
@@ -293,7 +278,7 @@ class streaming_adapter():
         try:
             eid = msg["order_id"]
         except KeyError:
-            raise GatewayError("Unable to parse eid")
+            raise Exception("Unable to parse eid")
 
         uid = "0"
         try:
@@ -331,14 +316,14 @@ class streaming_adapter():
         elif msg["side"] == "sell":
             ack.side = order_side.sell
         else:
-            raise GatewayError("Unable to find an order side")
+            raise Exception("Unable to find an order side")
 
         if msg["order_type"] == "limit":
             ack.type = order_type.limit
         elif msg["order_type"] == "market":
             ack.type = order_type.mkt
         else:
-            raise GatewayError("Unable to find an order type")
+            raise Exception("Unable to find an order type")
 
         ack.instrument_name = msg["contract_code"]
         ack.quantity = float(msg["size"])
@@ -360,7 +345,7 @@ class streaming_adapter():
         try:
             eid = msg["order_id"]
         except KeyError:
-            raise GatewayError("Unable to parse eid")
+            raise Exception("Unable to parse eid")
 
         try:
             uid = self.shared_storage.eid_to_uid[eid]
@@ -387,7 +372,7 @@ class streaming_adapter():
         try:
             eid = msg["order_id"]
         except KeyError:
-            raise GatewayError("{} Unable to parse eid".formate(self.config.exchange_name))
+            raise Exception("{} Unable to parse eid".formate(self.config.exchange_name))
 
         try:
             uid = self.shared_storage.eid_to_uid[eid]
@@ -415,7 +400,7 @@ class streaming_adapter():
         try:
             eid = msg["order_id"]
         except KeyError:
-            raise GatewayError("Unable to parse eid")
+            raise Exception("Unable to parse eid")
         try:
             uid = self.shared_storage.eid_to_uid[eid]
         except KeyError:
@@ -439,7 +424,7 @@ class streaming_adapter():
         try:
             eid = msg["order_id"]
         except KeyError:
-            raise GatewayError("Unable to parse eid")
+            raise Exception("Unable to parse eid")
         try:
             uid = self.shared_storage.eid_to_uid[eid]
         except KeyError:
@@ -465,7 +450,7 @@ class streaming_adapter():
         try:
             status = msg["status"]
         except KeyError:
-            raise GatewayError("Unable to parse message status")
+            raise Exception("Unable to parse message status")
 
         if status == "canceled":
             return
@@ -473,7 +458,7 @@ class streaming_adapter():
         try:
             eid = msg["order_id"]
         except KeyError:
-            raise GatewayError("Unable to parse eid")
+            raise Exception("Unable to parse eid")
 
         uid = "0"
         try:

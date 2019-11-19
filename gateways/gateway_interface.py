@@ -61,10 +61,6 @@ class gateway_interface(abc.ABC):
     def is_ready(self):
         pass
 
-    async def run(self):
-        while True:
-            await asyncio.sleep(1000.0)
-
     async def listen(self):
         while not self.stop:
             # await self.ready_to_listen.wait()

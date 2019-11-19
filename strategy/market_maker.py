@@ -3,9 +3,13 @@ import traceback
 
 from .strategy_interface import strategy_interface
 
+from logger import logging
+
 class market_maker(strategy_interface):
 
     def __init__(self, cfg, exchange_adapter):
+        self.logger = logging.getLogger()
+
         self._load_configuration(cfg)
 
         self.config = cfg
@@ -25,13 +29,15 @@ class market_maker(strategy_interface):
             option = getattr(cfg, option_name)
             if option is None:
                 self.logger.error("%s was not found", option_name)
-                raise Misconfiguration("{0} was not found".format(option_name))
+                raise Exception("{0} was not found".format(option_name))
             setattr(self, option_name, option)
 
     async def handle_exception(self, err_msg):
 
-        #TODO chec this
-        self.logger.error("handle_exception traceback: {}".format(stack_str))
+        import pdb; pdb.set_trace()
+
+        #TODO check this
+        self.logger.error("handle_exception traceback: {}".format(err_msg))
         for line in traceback.format_stack():
             self.logger.error(line.strip())
 
@@ -78,7 +84,7 @@ class market_maker(strategy_interface):
 
         await self.exchange_adapter.reconnect()
 
-    async def on_market_update(self):
+    async def on_market_update(self, update):
         pass
 
     async def run(self):

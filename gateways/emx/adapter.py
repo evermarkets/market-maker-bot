@@ -6,6 +6,7 @@ from gateways.gateway_interface import gateway_interface
 from gateways.emx.execution import execution_adapter
 from gateways.emx.streaming import streaming_adapter
 from gateways.emx.shared_storage import shared_storage
+from gateways.emx.auth import auth
 
 class emx_adapter(gateway_interface):
     def __init__(self, config):
@@ -14,10 +15,11 @@ class emx_adapter(gateway_interface):
         self.config = config
         self.storage = shared_storage()
         self.ws = websocket_client()
+        self.auth = auth(self.config)
 
-        self.execution = execution_adapter(self.config.execution, self.ws, self.storage)
+        self.execution = execution_adapter(self.config.execution, self.auth, self.ws, self.storage)
 
-        self.streaming = streaming_adapter(self.config.streaming, self.ws, self.storage)
+        self.streaming = streaming_adapter(self.config.streaming, self.auth, self.ws, self.storage)
 
     def set_order_update_callback(self, msg_callback):
         self.msg_callback = msg_callback
@@ -61,7 +63,7 @@ class emx_adapter(gateway_interface):
 
         if sub_params is None or url is None:
             self.logger.error("{} Params for creating the connection was not created".format(self.config.name))
-            raise GatewayError("{} Params for creating the connection was not created".format(self.config.name))
+            raise Exception("{} Params for creating the connection was not created".format(self.config.name))
 
         try:
             await self.ws.create_session_and_connection(url, sub_params)
@@ -73,14 +75,14 @@ class emx_adapter(gateway_interface):
         count = 1
         while self.streaming.subscribed is False:
             if count > 50:
-                raise GatewayError("{} Subscription ack was not received".format(self.config.name))
+                raise Exception("{} Subscription ack was not received".format(self.config.name))
             count += 1
             await asyncio.sleep(0.2)
 
         if self.cancel_orders_on_start is True:
             res = await self.cancel_active_orders()
             if res.success is False:
-                raise GatewayError("{} Existing orders were not cancelled".format(self.config.name))
+                raise Exception("{} Existing orders were not cancelled".format(self.config.name))
         else:
             self.logger.info("Cancellation request won't be sent")
 

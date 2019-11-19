@@ -64,3 +64,16 @@ class fill:
         self.fees = 0.0
         self.is_funding = False
         self.type = order_type.unknown
+
+
+class market_price_update:
+    def __init__(self):
+        self.exchange = ""
+        self.product = ""
+        self.market_price = 0
+        self.index_price = None
+        self.mark_price = None
+        self.fair_price = None
+        self.timestamp_str = ""
+        self.timestamp = 0.0
+

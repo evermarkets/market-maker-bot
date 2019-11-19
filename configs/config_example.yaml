@@ -17,7 +17,9 @@ adapter:
     api_key: ''
     api_secret: ''
     streaming:
+        symbol: TEST-PERP
         url: wss://api.alpha.emx.com
     execution:
+        symbol: TEST-PERP
         url: http://api.alpha.emx.com
 

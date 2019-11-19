@@ -3,7 +3,6 @@ import json
 import aiohttp
 import datetime
 
-from gateways.emx.auth import auth
 from definitions import api_result, order_type, order_side, exchange_orders, exchange_order
 
 from logger import logging
@@ -12,13 +11,13 @@ from logger import logging
 class execution_adapter():
     ROUNDING_QTY = 4
 
-    def __init__(self, config, ws, shared_storage):
+    def __init__(self, config, auth, ws, shared_storage):
         self.logger = logging.getLogger()
 
         self.config = config
         self.ws = ws
         self.shared_storage = shared_storage
-        self.auth = auth(self.config)
+        self.auth = auth
 
         self.headers = {
                         'content-type': 'application/json'
@@ -44,19 +43,19 @@ class execution_adapter():
         try:
             resp = await self.ws.session.get(url, json=body, headers=self.headers)
         except aiohttp.client_exceptions.ClientConnectorError as err:
-            raise GatewayError(str(err))
+            raise Exception(str(err))
         msg = await resp.text()
 
         self.logger.info("{} Orders received: {}".format(self.config.exchange_name, msg))
 
         if resp.status != 200:
-            raise GatewayError("Failed to request positions. Reason: {}".format(msg))
+            raise Exception("Failed to request positions. Reason: {}".format(msg))
 
         try:
             msg_json = json.loads(msg)
         except Exception as e:
             self.logger.exception("{} Exception raised during json parsing: {}. Msg: {}".format(self.config.exchange_name, str(e), msg))
-            raise GatewayError("{} Failed to parse the response {}".format(self.config.exchange_name, msg))
+            raise Exception("{} Failed to parse the response {}".format(self.config.exchange_name, msg))
 
         res = exchange_orders()
 
@@ -95,7 +94,7 @@ class execution_adapter():
             elif order.side == order_side.sell:
                 side = "sell"
             else:
-                raise GatewayError("Unknown order side. Type = {}".format(order.side))
+                raise Exception("Unknown order side. Type = {}".format(order.side))
 
             ord_type = ""
             if order.type == order_type.mkt:
@@ -103,7 +102,7 @@ class execution_adapter():
             elif order.type == order_type.limit:
                 ord_type = "limit"
             else:
-                raise GatewayError("Unknown order type. Type = {}".format(order.type))
+                raise Exception("Unknown order type. Type = {}".format(order.type))
 
             body = {
               "client_id": order.orderid,
@@ -148,10 +147,10 @@ class execution_adapter():
         elif new_order.type == order_type.limit:
             ord_type = "limit"
         else:
-            raise GatewayError("Unknown order type. Type = {}".format(new_order.type))
+            raise Exception("Unknown order type. Type = {}".format(new_order.type))
 
         if new_order.side != old_order.side:
-            raise GatewayError("Wrong order side. Side = {}".format(new_order.side))
+            raise Exception("Wrong order side. Side = {}".format(new_order.side))
 
         side = ""
         if new_order.side == order_side.buy:
@@ -159,7 +158,7 @@ class execution_adapter():
         elif new_order.side == order_side.sell:
             side = "sell"
         else:
-            raise GatewayError("Unknown order side. Type = {}".format(new_order.side))
+            raise Exception("Unknown order side. Type = {}".format(new_order.side))
 
         body = {
           "type": ord_type,
@@ -214,10 +213,10 @@ class execution_adapter():
             elif new_order.type == order_type.limit:
                 ord_type = "limit"
             else:
-                raise GatewayError("Unknown order type. Type = {}".format(new_order.type))
+                raise Exception("Unknown order type. Type = {}".format(new_order.type))
 
             if new_order.side != old_order.side:
-                raise GatewayError("Wrong order side. Side = {}".format(new_order.side))
+                raise Exception("Wrong order side. Side = {}".format(new_order.side))
 
             side = ""
             if new_order.side == order_side.buy:
@@ -225,7 +224,7 @@ class execution_adapter():
             elif new_order.side == order_side.sell:
                 side = "sell"
             else:
-                raise GatewayError("Unknown order side. Type = {}".format(new_order.side))
+                raise Exception("Unknown order side. Type = {}".format(new_order.side))
 
             body = {
               "type": ord_type,
@@ -269,7 +268,7 @@ class execution_adapter():
         elif order.side == order_side.sell:
             side = "sell"
         else:
-            raise GatewayError("Unknown order side. Type = {}".format(order.side))
+            raise Exception("Unknown order side. Type = {}".format(order.side))
 
         ord_type = ""
         if order.type == order_type.mkt:
@@ -277,7 +276,7 @@ class execution_adapter():
         elif order.type == order_type.limit:
             ord_type = "limit"
         else:
-            raise GatewayError("Unknown order type. Type = {}".format(order.type))
+            raise Exception("Unknown order type. Type = {}".format(order.type))
 
         body = {
           "client_id": order.orderid,
@@ -362,4 +361,4 @@ class execution_adapter():
         return res
 
     async def cancel_orders(self, ordersids):
-        raise GatewayError("Multiple orders cancellation is not supported")
+        raise Exception("Multiple orders cancellation is not supported")
