@@ -223,10 +223,10 @@ class streaming_adapter():
         tb = tob()
         tb.exchange = "emx"
         tb.product = data["contract_code"]
-        tb.best_bid_price = data["quote"]["bid"]
-        tb.best_bid_qty = data["quote"]["bid_size"]
-        tb.best_ask_price = data["quote"]["ask"]
-        tb.best_ask_qty = data["quote"]["ask_size"]
+        tb.best_bid_price = float(data["quote"]["bid"])
+        tb.best_bid_qty = float(data["quote"]["bid_size"])
+        tb.best_ask_price = float(data["quote"]["ask"])
+        tb.best_ask_qty = float(data["quote"]["ask_size"])
 
         tb.timestamp = datetime.datetime.utcnow()
         return tb

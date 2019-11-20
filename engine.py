@@ -48,6 +48,7 @@ class Engine:
                     await self.strategy.handle_exception(str(err))
                 except Exception as err:
                     self.logger.warning("run_strategy handle_exception failed on {}".format(err))
+            await asyncio.sleep(0.1)
         self.logger.warning("run_strategy was stopped")
 
     def run(self):
@@ -70,8 +71,7 @@ class Engine:
 
         asyncio.ensure_future(self.exchange_adapter.start())
         asyncio.ensure_future(self.listen_updates())
-
-        # asyncio.ensure_future(self.run_strategy())
+        asyncio.ensure_future(self.run_strategy())
 
         loop.set_debug(enabled=True)
         loop.slow_callback_duration = 0.05

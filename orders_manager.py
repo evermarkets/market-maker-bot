@@ -311,6 +311,24 @@ class orders_manager():
             pass
         self.logger.debug("Order was cancelled. Orderid = {}".format(orderid))
 
+    async def cancel_orders(self, orderids):
+        try:
+            orderids = [oid for oid in orderids if isinstance(self.orders_states[oid], full_fill) is False]
+        except KeyError as err:
+            self.logger.error("Failed to find an order for the cancelation {}".format(err))
+            return
+
+        if len(orderids) == 0:
+            return
+
+        self.live_orders_ids = [oid for oid in self.live_orders_ids if oid not in orderids]
+        for oid in orderids:
+            try:
+                res = await self.cancel_order(oid)
+            except Exception as err:
+                self.logger.error("Order cancellation failed, err {}".format(err))
+                raise
+
     async def cancel_active_orders(self):
         try:
             res = await self.exchange_adapter.cancel_active_orders()

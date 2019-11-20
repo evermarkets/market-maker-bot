@@ -6,7 +6,7 @@ from orders_manager import orders_manager
 
 from logger import logging
 
-from definitions import tob
+from definitions import tob, order_request, order_type, order_side
 
 class market_maker(strategy_interface):
     def __init__(self, cfg, exchange_adapter):
@@ -19,12 +19,20 @@ class market_maker(strategy_interface):
         self.exchange_adapter.set_order_update_callback(self.on_market_update)
         self.orders_manager = orders_manager(self.exchange_adapter)
 
+        self.update_orders = False
+
+        self.last_amend_time = None
+        self.reconnecting = False
+
+        self.tob = None
         self.cancel_all_request_was_sent = False
 
     def _load_configuration(self, cfg):
         option_names = (
             "instrument_name",
             "tick_size",
+            "depth",
+            "quantity",
             "stop_strategy_on_error",
             "cancel_orders_on_reconnection",
         )
@@ -36,8 +44,6 @@ class market_maker(strategy_interface):
             setattr(self, option_name, option)
 
     async def handle_exception(self, err_msg):
-
-        # import pdb; pdb.set_trace()
 
         #TODO check this
         self.logger.error("handle_exception traceback: {}".format(err_msg))
@@ -89,8 +95,89 @@ class market_maker(strategy_interface):
 
     async def on_market_update(self, update):
         if isinstance(update, tob):
-            self.tob = update
+            if self.tob is None:
+                self.tob = update
+            elif self.tob_moved(update):
+                self.tob = update
+                self.update_orders = True
             return
 
     async def run(self):
-        pass
+        if self.tob is None:
+            return
+        elif self.update_orders is False:
+            return
+
+        self.update_orders = False
+        await self.process_market_move()
+
+    def tob_moved(self, tob):
+        if self.tob.best_bid_price != tob.best_bid_price or self.tob.best_ask_price != tob.best_ask_price:
+            return True
+        return False
+
+
+    def _orders_are_ready_for_amend(self):
+        known_statuses = self.orders_manager.get_number_of_ready_for_amend()
+        if self.last_amend_time and len(self.orders_manager.live_orders_ids) > 0 and known_statuses != self.num_of_sent_orders:
+            return known_statuses
+        return True
+
+    async def process_market_move(self):
+        if self.reconnecting is True:
+            self.logger.info("Hedger ongoing reconnection, _process_validated_update will be stopped")
+            return
+
+
+        res = self._orders_are_ready_for_amend()
+        if res is not True:
+            known_statuses = res
+            if self.last_amend_time + self.MAX_NUMBER_OF_ATTEMPTS_SECS < time.time():
+                err_msg = (
+                    "{} Will be reconnected since only {} "
+                    "active orders were updated within {} seconds".format(
+                        self.config.primary,
+                        known_statuses,
+                        self.MAX_NUMBER_OF_ATTEMPTS_SECS
+                    )
+                )
+
+                res = await self.handle_exception(err_msg, self.config.primary)
+                if res is False:
+                    self.logger.log("Error: %s", err_msg)
+                    raise Exception("handle_exception failed")
+                return
+            return
+
+        orders = []
+        order = order_request()
+        order.instrument_name = self.config.instrument_name
+        order.side = order_side.sell
+        order.type = order_type.limit
+
+        # TODO check rounding
+        order.price = self.tob.best_ask_price + self.tick_size*self.depth
+        order.quantity = self.quantity
+        orders.append(order)
+
+        order = order_request()
+        order.instrument_name = self.config.instrument_name
+        order.side = order_side.buy
+        order.type = order_type.limit
+
+        order.price = self.tob.best_bid_price - self.tick_size*self.depth
+        order.quantity = self.quantity
+        orders.append(order)
+    
+        try:
+            await self.orders_manager.amend_active_orders(orders)
+        except Exception as err:
+            res = await self.handle_exception(err)
+            if res is False:
+                self.logger.exception("Exception")
+                raise GatewayError("Orders amend failed {}".format(err))
+            return
+
+        self.last_amend_time = time.time()
+        self.num_of_sent_orders = len(orders)
+
