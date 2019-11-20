@@ -66,14 +66,113 @@ class fill:
         self.type = order_type.unknown
 
 
-class market_price_update:
+class tob:
     def __init__(self):
         self.exchange = ""
         self.product = ""
-        self.market_price = 0
-        self.index_price = None
-        self.mark_price = None
-        self.fair_price = None
-        self.timestamp_str = ""
+        self.best_bid_price = None
+        self.best_bid_qty = None
+        self.best_ask_price = None
+        self.best_ask_qty = None
         self.timestamp = 0.0
 
+
+
+class new_order_ack:
+    def __init__(self):
+        self.orderid = ""
+        self.instrument_name = ""
+        self.quantity = 0.0
+        self.price = 0.0
+        self.side = order_side.unknown
+        self.type = order_type.unknown
+        self.timestamp = datetime.datetime.now().timestamp()
+
+
+class new_order_nack:
+    def __init__(self):
+        self.orderid = ""
+        self.exchange_orderid = ""
+        self.rejection_reason = ""
+        # self.timestamp = None
+
+
+class order_elim_ack:
+    def __init__(self):
+        self.orderid = ""
+        # self.timestamp = None
+
+
+class order_elim_nack:
+    def __init__(self):
+        self.orderid = ""
+        self.rejection_reason = ""
+        # self.timestamp = None
+
+
+class order_fill_ack:
+    def __init__(self):
+        self.exchange = ""
+        self.instrument = ""
+        self.orderid = ""
+        self.exchangeid = ""
+        self.fillid = ""
+        self.side = ""
+        self.order_type = ""
+        self.order_qty = 0.0
+        self.price = 0.0
+        self.fill_price = 0.0
+        self.running_fill_qty = 0.0
+        self.incremental_fill_qty = 0.0
+        self.timestamp = ""
+        self.fee = 0.0
+
+class order_full_fill_ack:
+    def __init__(self):
+        self.exchange = ""
+        self.instrument = ""
+        self.orderid = ""
+        self.exchangeid = ""
+        self.fillid = ""
+        self.side = ""
+        self.order_type = ""
+        self.order_qty = 0.0
+        self.price = 0.0
+        self.fill_price = 0.0
+        self.running_fill_qty = 0.0
+        self.incremental_fill_qty = 0.0
+        self.timestamp = ""
+        self.fee = 0.0
+
+
+class amend_ack_on_partial:
+    def __init__(self):
+        self.exchange = ""
+        self.instrument = ""
+        self.orderid = ""
+        self.exchangeid = ""
+        self.fillid = ""
+        self.side = ""
+        self.order_type = ""
+        self.order_qty = 0.0
+        self.price = 0.0
+        self.running_fill_qty = 0.0
+        self.timestamp = ""
+        self.fee = 0.0
+
+
+class amend_ack:
+    def __init__(self):
+        self.orderid = ""
+        self.instrument_name = ""
+        self.quantity = 0.0
+        self.price = 0.0
+        self.side = order_side.unknown
+        self.type = order_type.unknown
+        self.timestamp = datetime.datetime.now().timestamp()
+
+
+class amend_nack:
+    def __init__(self):
+        self.orderid = ""
+        self.rejection_reason = ""
