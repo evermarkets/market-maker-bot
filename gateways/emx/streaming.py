@@ -2,7 +2,7 @@ import time
 import datetime
 
 from logger import logging
-from definitions import market_price_update, exchange_orders, exchange_order
+from definitions import tob, exchange_orders, exchange_order
 
 
 class streaming_adapter():
@@ -220,26 +220,16 @@ class streaming_adapter():
 
     def process_tick(self, msg):
         data = msg["data"]
-        mp = market_price_update()
-        mp.exchange = self.config.exchange_name
-        mp.product = data["contract_code"]
+        tb = tob()
+        tb.exchange = "emx"
+        tb.product = data["contract_code"]
+        tb.best_bid_price = data["quote"]["bid"]
+        tb.best_bid_qty = data["quote"]["bid_size"]
+        tb.best_ask_price = data["quote"]["ask"]
+        tb.best_ask_qty = data["quote"]["ask_size"]
 
-        try:
-            mp.last_trade_price = float(data["last_trade"]["price"])
-            mp.last_trade_time = datetime.datetime.strptime(data["last_trade"]["logical_time"], "%Y-%m-%dT%H:%M:%S.%fZ")
-        except Exception as err:
-            self.logger.info("No last trade")
-
-        mp.index_price = float(data["index_price"]) if data["index_price"] else None
-        mp.mark_price = data["mark_price"]
-        mp.fair_price = data["fair_price"]
-
-        try:
-            mp.timestamp_str = data["logical_time"]
-        except Exception as err:
-            self.logger.info("No logical time")
-            return None
-        return mp
+        tb.timestamp = datetime.datetime.utcnow()
+        return tb
 
     def process_new_received(self, msg):
         if msg["contract_code"] == self.btcusd_product:

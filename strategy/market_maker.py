@@ -2,11 +2,13 @@ import asyncio
 import traceback
 
 from .strategy_interface import strategy_interface
+from orders_manager import orders_manager
 
 from logger import logging
 
-class market_maker(strategy_interface):
+from definitions import tob
 
+class market_maker(strategy_interface):
     def __init__(self, cfg, exchange_adapter):
         self.logger = logging.getLogger()
 
@@ -15,6 +17,7 @@ class market_maker(strategy_interface):
         self.config = cfg
         self.exchange_adapter = exchange_adapter
         self.exchange_adapter.set_order_update_callback(self.on_market_update)
+        self.orders_manager = orders_manager(self.exchange_adapter)
 
         self.cancel_all_request_was_sent = False
 
@@ -34,7 +37,7 @@ class market_maker(strategy_interface):
 
     async def handle_exception(self, err_msg):
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
         #TODO check this
         self.logger.error("handle_exception traceback: {}".format(err_msg))
@@ -85,7 +88,9 @@ class market_maker(strategy_interface):
         await self.exchange_adapter.reconnect()
 
     async def on_market_update(self, update):
-        pass
+        if isinstance(update, tob):
+            self.tob = update
+            return
 
     async def run(self):
         pass
