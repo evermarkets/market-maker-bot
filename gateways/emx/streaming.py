@@ -486,24 +486,4 @@ class streaming_adapter():
 
         t_diff = datetime.datetime.utcnow() - timestamp_obj
         self.logger.info("Took {} to receive a fill".format(t_diff.total_seconds()))
-
-        if self.monitoring_adapter.enabled is False:
-            return ack
-
-        fl = fill()
-        fl.exchange = 'emx'
-        fl.instrument = ack.instrument
-        fl.orderid = ack.orderid
-        fl.fillid = ack.fillid
-        fl.qty = ack.incremental_fill_qty
-        if ack.side == 'sell':
-            fl.qty *= -1
-        fl.fill_price = ack.fill_price
-        fl.timestamp = timestamp_obj
-        fl.fees = ack.fee * -1
-
-        self.positions_mngr.store_and_send_fill_update(fl)
-
-        self.monitoring_adapter.process(ActionType.Log, EventType.Fill, ack)
-        self.monitoring_adapter.process(ActionType.MQ, EventType.Fill, ack)
         return ack

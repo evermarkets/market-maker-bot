@@ -13,9 +13,12 @@ from definitions import (
     order_type,
     order_side,
     exchange_orders,
+    new_order_ack,
+    amend_ack,    
 )
 
 class market_maker(strategy_interface):
+    TIME_TO_WAIT_SINCE_START_SECS = 10
     MAX_NUMBER_OF_ATTEMPTS_SECS = 5
 
     def __init__(self, cfg, exchange_adapter):
@@ -35,6 +38,7 @@ class market_maker(strategy_interface):
 
         self.update_orders = False
 
+        self.started_time = time.time()
         self.last_amend_time = None
         self.reconnecting = False
 
@@ -107,27 +111,54 @@ class market_maker(strategy_interface):
             self.primary_ob = None
         await self.exchange_adapter.reconnect()
 
+
+    async def _cancel_orders(self):
+        try:
+            await self.orders_manager.cancel_active_orders()
+        except Exception as err:
+            res = await self.handle_exception(err)
+            if res is False:
+                self.logger.exception("_cancel_orders, msg {}".format(err))
+                raise Exception("_cancel_orders, msg {}".format(err))
+            return
+
     async def process_active_orders_on_start(self, orders_msg):
         if len(orders_msg.bids + orders_msg.asks) == 0 or self.cancel_orders_on_start is True:
             return
+
+        if len(orders_msg.bids + orders_msg.asks) % 2 != 0:
+            await self._cancel_orders()
+            return
+            
+
         self.orders_manager.activate_orders(orders_msg)
 
     async def on_market_update(self, update):
         if isinstance(update, tob):
+            self.update_orders = True
             if self.tob is None:
                 self.tob = update
             elif self.tob_moved(update):
                 self.tob = update
-                self.update_orders = True
             return
         elif isinstance(update, exchange_orders):
             await self.process_active_orders_on_start(update)
             return
+        elif isinstance(update, (new_order_ack, amend_ack)):
+            try:
+                self.orders_manager.update_order_state(update.orderid, update)
+            except Exception as err:
+                self.logger.error("update_order_state failed on {}".format(update))
+                raise Exception("on_market_update raised. update = {}, reason = {}".format(
+                    type(update), str(err)))
+
 
     async def run(self):
         if self.tob is None:
             return
         elif self.update_orders is False:
+            return
+        elif self.started_time + self.TIME_TO_WAIT_SINCE_START_SECS > time.time():
             return
 
         self.update_orders = False
@@ -146,14 +177,17 @@ class market_maker(strategy_interface):
         return True
 
     async def process_market_move(self):
-        
         if self.reconnecting is True:
-            self.logger.info("Hedger ongoing reconnection, _process_validated_update will be stopped")
+            self.logger.info("Ongoing reconnection, process_market_move will be stopped")
             return
 
+        self.logger.info("process_market_move started")
 
         res = self._orders_are_ready_for_amend()
         if res is not True:
+
+            self.logger.info("_orders_are_ready_for_amend returned False")
+
             known_statuses = res
             if self.last_amend_time + self.MAX_NUMBER_OF_ATTEMPTS_SECS < time.time():
                 err_msg = (
