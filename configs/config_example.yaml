@@ -6,11 +6,11 @@ logger:
 
 strategy:
     name: market_maker
-    instrument_name: 'TEST-PERP'
+    instrument_name: 'BTC-PERP'
 
     tick_size: 0.5
 
-    depth: 10
+    depth: 20
     quantity: 0.3
     cancel_orders_on_start: False
     stop_strategy_on_error: True
@@ -20,9 +20,9 @@ adapter:
     api_key: ''
     api_secret: ''
     streaming:
-        symbol: TEST-PERP
-        url: wss://api.alpha.emx.com
+        symbol: BTC-PERP
+        url: wss://api.testnet.emx.com
     execution:
-        symbol: TEST-PERP
-        url: http://api.alpha.emx.com
+        symbol: BTC-PERP
+        url: http://api.testnet.emx.com
 
