@@ -18,7 +18,6 @@ class emx_adapter(gateway_interface):
         self.auth = auth(self.config)
 
         self.execution = execution_adapter(self.config.execution, self.auth, self.ws, self.storage)
-
         self.streaming = streaming_adapter(self.config.streaming, self.auth, self.ws, self.storage)
 
     def set_order_update_callback(self, msg_callback):
@@ -34,13 +33,13 @@ class emx_adapter(gateway_interface):
         return await self.execution.amend_order(new, old)
 
     async def amend_orders(self, new, old):
-        raise Exception("amend_orders method is not implemented yet")
+        return await self.execution.amend_orders(new, old)
 
     async def send_order(self, order):
         return await self.execution.send_order(order)
 
     async def send_orders(self, orders):
-        raise Exception("send_orders method is not implemented yet")
+        return await self.execution.send_orders(orders)
 
     async def cancel_order(self, orderid):
         return await self.execution.cancel_order(orderid)

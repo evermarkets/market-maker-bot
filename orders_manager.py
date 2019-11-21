@@ -248,6 +248,9 @@ class orders_manager():
         orders_to_place = []
         orders_ids_to_cancel = []
 
+        if len(existing_orders) == 0:
+            orders_to_place = new_orders
+
         for new, existing in zip(new_orders, existing_orders):
             if new.side != existing.side:
                 self.logger.warning("Order sides are not the same. Orderid {}".format(existing.orderid))
@@ -291,7 +294,7 @@ class orders_manager():
             await self.place_orders(orders_to_place)
             await self._amend_orders(list(pairs_to_amend.keys()), list(pairs_to_amend.values()))
         except Exception as err:
-            self.logger.error("Amend logic faile {}".format(err))
+            self.logger.error("Amend logic failed {}".format(err))
             raise
 
     async def cancel_order(self, orderid):

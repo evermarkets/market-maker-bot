@@ -12,6 +12,7 @@ strategy:
 
     depth: 10
     quantity: 0.3
+    cancel_orders_on_start: False
     stop_strategy_on_error: True
     cancel_orders_on_reconnection: False
 

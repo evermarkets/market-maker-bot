@@ -2,7 +2,23 @@ import time
 import datetime
 
 from logger import logging
-from definitions import tob, exchange_orders, exchange_order
+from definitions import (
+    tob, 
+    exchange_orders,
+    exchange_order,
+    order_type,
+    order_side,
+    new_order_ack,
+    new_order_nack,
+    order_elim_ack,
+    order_elim_nack,
+    order_fill_ack,
+    order_full_fill_ack,
+    amend_ack,
+    amend_nack,
+    amend_ack_on_partial
+
+)
 
 
 class streaming_adapter():
@@ -167,9 +183,6 @@ class streaming_adapter():
         orders_msg.instrument = ""
 
         for elem in msg:
-            if elem["contract_code"] == self.btcusd_product:
-                continue
-
             exch_ord = exchange_order()
             exch_ord.instrument_name = elem["contract_code"]
             exch_ord.quantity = float(elem["size"])
@@ -232,9 +245,6 @@ class streaming_adapter():
         return tb
 
     def process_new_received(self, msg):
-        if msg["contract_code"] == self.btcusd_product:
-            return
-
         try:
             eid = msg["order_id"]
         except KeyError:
@@ -258,9 +268,6 @@ class streaming_adapter():
         return None
 
     def process_accept(self, msg):
-        if msg["contract_code"] == self.btcusd_product:
-            return
-
         if self.config.symbol and msg["contract_code"] not in self.config.symbol:
             self.logger.warning("emx msg for the wrong instrument. {}".format(msg))
             return
@@ -324,9 +331,6 @@ class streaming_adapter():
         return ack
 
     def process_new_rejection(self, msg):
-        if msg["contract_code"] == self.btcusd_product:
-            return
-
         if self.config.symbol and msg["contract_code"] not in self.config.symbol:
             self.logger.warning("emx msg for the wrong instrument. {}".format(msg))
             return
@@ -351,9 +355,6 @@ class streaming_adapter():
         return nack
 
     def process_amend_rejection(self, msg):
-        if msg["contract_code"] == self.btcusd_product:
-            return
-
         if self.config.symbol and msg["contract_code"] not in self.config.symbol:
             self.logger.warning("emx msg for the wrong instrument. {}".format(msg))
             return
@@ -379,9 +380,6 @@ class streaming_adapter():
         return nack
 
     def process_elim(self, msg):
-        if msg["contract_code"] == self.btcusd_product:
-            return
-
         if self.config.symbol and msg["contract_code"] not in self.config.symbol:
             self.logger.warning("emx msg for the wrong instrument. {}".format(msg))
             return
@@ -403,9 +401,6 @@ class streaming_adapter():
         return ack
 
     def process_elim_reject(self, msg):
-        if msg["contract_code"] == self.btcusd_product:
-            return
-
         if self.config.symbol and msg["contract_code"] not in self.config.symbol:
             self.logger.warning("emx msg for the wrong instrument. {}".format(msg))
             return
@@ -428,9 +423,6 @@ class streaming_adapter():
         return nack
 
     def process_fill(self, msg):
-        if msg["contract_code"] == self.btcusd_product:
-            return
-
         if self.config.symbol and msg["contract_code"] not in self.config.symbol:
             self.logger.warning("emx msg for the wrong instrument. {}".format(msg))
             return

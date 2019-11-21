@@ -13,12 +13,7 @@ class gateway_interface(abc.ABC):
         self.msg_callback = None
         self.stop = False
         self.last_hb_time = time.time()
-        self.request_positions_flag = False
-        self.request_fills_flag = False
         self.cancel_orders_on_start = False
-
-        self.max_num_of_orders = None
-        self.qty_multiplier = None
 
         self.started = False
         self.reconnecting = False
