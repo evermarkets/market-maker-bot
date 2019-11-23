@@ -15,6 +15,10 @@ from definitions import (
     exchange_orders,
     new_order_ack,
     amend_ack,    
+    new_order_nack,
+    amend_nack,
+    order_fill_ack,
+    order_full_fill_ack,
 )
 
 class market_maker(strategy_interface):
@@ -45,12 +49,13 @@ class market_maker(strategy_interface):
         self.tob = None
         self.cancel_all_request_was_sent = False
 
+        self.user_asks = self.config.orders.asks
+        self.user_bids = self.config.orders.bids
+
     def _load_configuration(self, cfg):
         option_names = (
             "instrument_name",
             "tick_size",
-            "depth",
-            "quantity",
             "cancel_orders_on_start",
             "stop_strategy_on_error",
             "cancel_orders_on_reconnection",
@@ -205,24 +210,27 @@ class market_maker(strategy_interface):
             return
 
         orders = []
-        order = order_request()
-        order.instrument_name = self.config.instrument_name
-        order.side = order_side.sell
-        order.type = order_type.limit
+        for quote in self.user_asks:
+            level, qty = quote
+            order = order_request()
+            order.instrument_name = self.config.instrument_name
+            order.side = order_side.sell
+            order.type = order_type.limit
 
-        # TODO check rounding
-        order.price = self.tob.best_ask_price + self.tick_size*self.depth
-        order.quantity = self.quantity
-        orders.append(order)
+            order.price = self.tob.best_ask_price + self.tick_size*level
+            order.quantity = qty
+            orders.append(order)
 
-        order = order_request()
-        order.instrument_name = self.config.instrument_name
-        order.side = order_side.buy
-        order.type = order_type.limit
+        for quote in self.user_bids:
+            level, qty = quote
+            order = order_request()
+            order.instrument_name = self.config.instrument_name
+            order.side = order_side.buy
+            order.type = order_type.limit
 
-        order.price = self.tob.best_bid_price - self.tick_size*self.depth
-        order.quantity = self.quantity
-        orders.append(order)
+            order.price = self.tob.best_bid_price - self.tick_size*level
+            order.quantity = qty
+            orders.append(order)
 
         try:
             await self.orders_manager.amend_active_orders(orders)

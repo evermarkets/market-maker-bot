@@ -10,9 +10,17 @@ strategy:
 
     tick_size: 0.5
 
-    depth: 20
-    quantity: 0.3
-    cancel_orders_on_start: False
+    orders:
+        asks: [
+                [10, 0.01],
+                [12, 0.1]
+              ]
+        bids: [
+                [10, 0.01],
+                [11, 0.01]
+              ]
+
+    cancel_orders_on_start: True
     stop_strategy_on_error: True
     cancel_orders_on_reconnection: False
 
