@@ -63,8 +63,6 @@ class market_maker(strategy_interface):
             setattr(self, option_name, option)
 
     async def handle_exception(self, err_msg):
-
-        #TODO check this
         self.logger.error("handle_exception traceback: {}".format(err_msg))
         for line in traceback.format_stack():
             self.logger.error(line.strip())
@@ -125,20 +123,19 @@ class market_maker(strategy_interface):
     async def process_active_orders_on_start(self, orders_msg):
         if len(orders_msg.bids + orders_msg.asks) == 0 or self.cancel_orders_on_start is True:
             return
-
-        if len(orders_msg.bids + orders_msg.asks) % 2 != 0:
+        elif len(orders_msg.bids + orders_msg.asks) % 2 != 0:
             await self._cancel_orders()
             return
-            
 
         self.orders_manager.activate_orders(orders_msg)
 
     async def on_market_update(self, update):
         if isinstance(update, tob):
-            self.update_orders = True
             if self.tob is None:
+                self.update_orders = True
                 self.tob = update
             elif self.tob_moved(update):
+                self.update_orders = True
                 self.tob = update
             return
         elif isinstance(update, exchange_orders):
@@ -151,6 +148,8 @@ class market_maker(strategy_interface):
                 self.logger.error("update_order_state failed on {}".format(update))
                 raise Exception("on_market_update raised. update = {}, reason = {}".format(
                     type(update), str(err)))
+        elif isinstance(update, (amend_nack, new_order_nack)):
+            self.logger.info("Received order nack {}".format(update.__dict__))
 
 
     async def run(self):
