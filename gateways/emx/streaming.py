@@ -22,11 +22,10 @@ from definitions import (
 
 
 class streaming_adapter():
-    def __init__(self, config, auth, ws, shared_storage):
+    def __init__(self, config, auth, shared_storage):
         self.logger = logging.getLogger()
 
         self.config = config
-        self.ws = ws
         self.shared_storage = shared_storage
 
         self.symbol = self.config.symbol

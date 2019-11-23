@@ -18,7 +18,7 @@ class emx_adapter(gateway_interface):
         self.auth = auth(self.config)
 
         self.execution = execution_adapter(self.config.execution, self.auth, self.ws, self.storage)
-        self.streaming = streaming_adapter(self.config.streaming, self.auth, self.ws, self.storage)
+        self.streaming = streaming_adapter(self.config.streaming, self.auth, self.storage)
 
     def set_order_update_callback(self, msg_callback):
         self.msg_callback = msg_callback
