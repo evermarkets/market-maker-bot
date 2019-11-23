@@ -156,7 +156,6 @@ class market_maker(strategy_interface):
             raise Exception("on_market_update raised. update = {}, reason = {}".format(
                 type(update), str(err)))
 
-
     async def run(self):
         if self.tob is None:
             return
