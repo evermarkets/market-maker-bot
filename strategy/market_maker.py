@@ -146,15 +146,15 @@ class market_maker(strategy_interface):
         elif isinstance(update, exchange_orders):
             await self.process_active_orders_on_start(update)
             return
-        elif isinstance(update, (new_order_ack, amend_ack)):
-            try:
-                self.orders_manager.update_order_state(update.orderid, update)
-            except Exception as err:
-                self.logger.error("update_order_state failed on {}".format(update))
-                raise Exception("on_market_update raised. update = {}, reason = {}".format(
-                    type(update), str(err)))
         elif isinstance(update, (amend_nack, new_order_nack)):
             self.logger.info("Received order nack {}".format(update.__dict__))
+
+        try:
+            self.orders_manager.update_order_state(update.orderid, update)
+        except Exception as err:
+            self.logger.error("update_order_state failed on {}".format(update))
+            raise Exception("on_market_update raised. update = {}, reason = {}".format(
+                type(update), str(err)))
 
 
     async def run(self):
