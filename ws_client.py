@@ -18,7 +18,7 @@ class websocket_client():
         try:
             self.session = aiohttp.ClientSession()
         except Exception as err:
-            raise Exception("Failed to create a client session. Uknown exception: {}".format(err))
+            raise Exception("Failed to create a client session. Unknown exception: {}".format(err))
 
     async def connect(self, url):
         try:
@@ -45,19 +45,6 @@ class websocket_client():
                 self.logger.warning("self.close failed on {}".format(err))
                 raise Exception("Failed to connect, sice close didn't work")
 
-    async def create_connection(self, url, auth_params):
-        try:
-            await self.connect(url)
-        except Exception as err:
-            self.logger.exception("connect raise: {}".format(err))
-            raise
-
-        if auth_params:
-            await self.send_ws_msg(auth_params)
-
-    async def send_ws_msg(self, msg):
-        await self.ws.send_str(json.dumps(msg))
-
     async def _create_session_and_connection(self, url, auth_params=None):
         self.create_client_session()
 
@@ -70,9 +57,9 @@ class websocket_client():
         if auth_params:
             if isinstance(auth_params, list):
                 for param in auth_params:
-                    await self.send_ws_msg(param)
+                    await self.send(param)
             else:
-                await self.send_ws_msg(auth_params)
+                await self.send(auth_params)
 
     async def send(self, params):
         await self.ws.send_str(json.dumps(params))
