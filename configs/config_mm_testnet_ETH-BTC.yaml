@@ -1,0 +1,35 @@
+logger:
+    level: INFO
+    name: mm_bot_logger_ethbtc
+
+strategy:
+    name: market_maker
+    instrument_name: 'ETH-BTC'
+
+    tick_size: 0.000001
+    price_rounding: 6
+
+    orders:
+        asks: [
+                [10, 0.01],
+                [12, 0.1]
+              ]
+        bids: [
+                [10, 0.01],
+                [11, 0.01]
+              ]
+
+    cancel_orders_on_start: True
+    stop_strategy_on_error: True
+    cancel_orders_on_reconnection: False
+
+adapter:
+    api_key: ''
+    api_secret: ''
+    streaming:
+        symbol: ETH-BTC
+        url: wss://api.testnet.emx.com
+    execution:
+        symbol: ETH-BTC
+        url: http://api.testnet.emx.com
+
