@@ -20,10 +20,12 @@ from definitions import (
     order_full_fill_ack,
 )
 
+
 class bittest_storage():
     def __init__(self):
         self.uid_to_eid = {}
         self.eid_to_uid = {}
+
 
 class bittest_adapter(gateway_interface.gateway_interface):
 
@@ -57,7 +59,7 @@ class bittest_adapter(gateway_interface.gateway_interface):
 
         self.orders_sent += len(orders_request)
         for _request in orders_request:
-            self.new_orders_data.append( _request)
+            self.new_orders_data.append(_request)
         return res
 
     async def amend_orders(self, new, old):

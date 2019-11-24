@@ -1,4 +1,3 @@
-
 class shared_storage():
     def __init__(self):
         self.uid_to_eid = {}

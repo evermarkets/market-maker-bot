@@ -16,10 +16,12 @@ from definitions import (
     order_full_fill_ack,
 )
 
+
 class bittest_storage():
     def __init__(self):
         self.uid_to_eid = {}
         self.eid_to_uid = {}
+
 
 class bittest_adapter(gateway_interface.gateway_interface):
 
@@ -53,7 +55,7 @@ class bittest_adapter(gateway_interface.gateway_interface):
 
         self.orders_sent += len(orders_request)
         for _request in orders_request:
-            self.new_orders_data.append( _request)
+            self.new_orders_data.append(_request)
         return res
 
     async def amend_orders(self, new, old):
@@ -101,7 +103,6 @@ class bittest_adapter(gateway_interface.gateway_interface):
         pass
 
 
-
 @pytest.fixture
 def cfg_strategy_fixture():
     b = DefaultMunch()
@@ -120,8 +121,8 @@ def cfg_strategy_fixture():
     b.cancel_orders_on_reconnection = True
 
     b.orders = DefaultMunch()
-    b.orders.asks = [[0,1]]
-    b.orders.bids = [[0,1]]
+    b.orders.asks = [[0, 1]]
+    b.orders.bids = [[0, 1]]
     return b
 
 
@@ -132,7 +133,7 @@ async def test_maker_init(cfg_strategy_fixture):
     except Exception:
         assert False
 
-    
+
 @pytest.mark.asyncio
 async def test_maker_rounding_tob_based(cfg_strategy_fixture):
     try:
@@ -182,6 +183,7 @@ async def test_maker_rounding_mid_based_1(cfg_strategy_fixture):
     assert orders[0].price == 101
     assert orders[1].price == 100
 
+
 @pytest.mark.asyncio
 async def test_maker_rounding_mid_based_2(cfg_strategy_fixture):
     cfg_strategy_fixture.mid_price_based_calculation = True
@@ -206,6 +208,7 @@ async def test_maker_rounding_mid_based_2(cfg_strategy_fixture):
 
     assert orders[0].price == 101
     assert orders[1].price == 99
+
 
 @pytest.mark.asyncio
 async def test_maker_rounding_mid_based_3(cfg_strategy_fixture):

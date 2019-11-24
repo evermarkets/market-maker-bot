@@ -47,9 +47,8 @@ class exchange_orders:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
-        self.bids = [] # exchange_order is expected
+        self.bids = []  # exchange_order is expected
         self.asks = []  # exchange_order is expected
-
 
 
 class fill:
@@ -75,7 +74,6 @@ class tob:
         self.best_ask_price = None
         self.best_ask_qty = None
         self.timestamp = 0.0
-
 
 
 class new_order_ack:
@@ -126,6 +124,7 @@ class order_fill_ack:
         self.incremental_fill_qty = 0.0
         self.timestamp = ""
         self.fee = 0.0
+
 
 class order_full_fill_ack:
     def __init__(self):

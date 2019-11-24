@@ -20,8 +20,8 @@ class execution_adapter():
         self.auth = auth
 
         self.headers = {
-                        'content-type': 'application/json'
-                       }
+            'content-type': 'application/json'
+        }
 
     def _get_timestamp(self):
         return int(round(time.time()))
@@ -38,7 +38,8 @@ class execution_adapter():
         self.headers['EMX-ACCESS-SIG'] = signature.decode().strip()
         self.headers['EMX-ACCESS-TIMESTAMP'] = str(timestamp)
 
-        self.logger.info("{} Requesting orders, Info = {}, Data: {}".format(self.config.exchange_name, self.headers, body))
+        self.logger.info(
+            "{} Requesting orders, Info = {}, Data: {}".format(self.config.exchange_name, self.headers, body))
 
         try:
             resp = await self.ws.session.get(url, json=body, headers=self.headers)
@@ -54,7 +55,8 @@ class execution_adapter():
         try:
             msg_json = json.loads(msg)
         except Exception as e:
-            self.logger.exception("{} Exception raised during json parsing: {}. Msg: {}".format(self.config.exchange_name, str(e), msg))
+            self.logger.exception(
+                "{} Exception raised during json parsing: {}. Msg: {}".format(self.config.exchange_name, str(e), msg))
             raise Exception("{} Failed to parse the response {}".format(self.config.exchange_name, msg))
 
         res = exchange_orders()
@@ -105,11 +107,11 @@ class execution_adapter():
                 raise Exception("Unknown order type. Type = {}".format(order.type))
 
             body = {
-              "client_id": order.orderid,
-              "contract_code": self.config.symbol,
-              "type": ord_type,
-              "side": side,
-              "size": str(round(order.quantity, self.ROUNDING_QTY))
+                "client_id": order.orderid,
+                "contract_code": self.config.symbol,
+                "type": ord_type,
+                "side": side,
+                "size": str(round(order.quantity, self.ROUNDING_QTY))
             }
             if order.type == order_type.limit:
                 body["price"] = str(order.price)
@@ -117,11 +119,11 @@ class execution_adapter():
             self.shared_storage.orders[order.orderid] = order
 
         final_data = {
-                        "channel": "trading",
-                        "type": "request",
-                        "action": "create-order",
-                        "data": data
-                     }
+            "channel": "trading",
+            "type": "request",
+            "action": "create-order",
+            "data": data
+        }
 
         self.logger.info("EMX sending new order request. Data: {}".format(final_data))
         try:
@@ -161,20 +163,20 @@ class execution_adapter():
             raise Exception("Unknown order side. Type = {}".format(new_order.side))
 
         body = {
-          "type": ord_type,
-          "side": side,
-          "order_id": eid,
-          "size": str(round(new_order.quantity, self.ROUNDING_QTY))
+            "type": ord_type,
+            "side": side,
+            "order_id": eid,
+            "size": str(round(new_order.quantity, self.ROUNDING_QTY))
         }
         if new_order.type == order_type.limit:
             body["price"] = str(new_order.price)
 
         final_data = {
-                        "channel": "trading",
-                        "type": "request",
-                        "action": "modify-order",
-                        "data": body
-                     }
+            "channel": "trading",
+            "type": "request",
+            "action": "modify-order",
+            "data": body
+        }
 
         self.logger.info("Sending amend request. New orderId = {}, old orderid = {}, Data: {}".format(
             new_order.orderid,
@@ -227,10 +229,10 @@ class execution_adapter():
                 raise Exception("Unknown order side. Type = {}".format(new_order.side))
 
             body = {
-              "type": ord_type,
-              "side": side,
-              "order_id": eid,
-              "size": str(round(new_order.quantity, self.ROUNDING_QTY))
+                "type": ord_type,
+                "side": side,
+                "order_id": eid,
+                "size": str(round(new_order.quantity, self.ROUNDING_QTY))
             }
             if new_order.type == order_type.limit:
                 body["price"] = str(new_order.price)
@@ -244,11 +246,11 @@ class execution_adapter():
             self.logger.debug("Ids mapped during amend, eid = {}, uid = {}".format(eid, new_order.orderid))
 
         final_data = {
-                        "channel": "trading",
-                        "type": "request",
-                        "action": "modify-order",
-                        "data": data
-                     }
+            "channel": "trading",
+            "type": "request",
+            "action": "modify-order",
+            "data": data
+        }
 
         self.logger.info("Sending bulk amend request. Data: {}".format(final_data))
         try:
@@ -279,21 +281,21 @@ class execution_adapter():
             raise Exception("Unknown order type. Type = {}".format(order.type))
 
         body = {
-          "client_id": order.orderid,
-          "contract_code": self.config.symbol if self.config.symbol else order.instrument_name,
-          "type": ord_type,
-          "side": side,
-          "size": str(round(order.quantity, self.ROUNDING_QTY))
+            "client_id": order.orderid,
+            "contract_code": self.config.symbol if self.config.symbol else order.instrument_name,
+            "type": ord_type,
+            "side": side,
+            "size": str(round(order.quantity, self.ROUNDING_QTY))
         }
         if order.type == order_type.limit:
             body["price"] = str(order.price)
 
         final_data = {
-                        "channel": "trading",
-                        "type": "request",
-                        "action": "create-order",
-                        "data": body
-                     }
+            "channel": "trading",
+            "type": "request",
+            "action": "create-order",
+            "data": body
+        }
 
         self.shared_storage.orders[order.orderid] = order
 
@@ -317,15 +319,15 @@ class execution_adapter():
             return res
 
         body = {
-          "order_id": eid
+            "order_id": eid
         }
 
         final_data = {
-                        "channel": "trading",
-                        "type": "request",
-                        "action": "cancel-order",
-                        "data": body
-                     }
+            "channel": "trading",
+            "type": "request",
+            "action": "cancel-order",
+            "data": body
+        }
 
         self.logger.info("Sending cancellation request. eid = {}, data: {}".format(eid, final_data))
         try:
@@ -341,15 +343,15 @@ class execution_adapter():
         res = api_result()
 
         body = {
-          "contract_code": self.config.symbol
+            "contract_code": self.config.symbol
         }
 
         final_data = {
-                        "channel": "trading",
-                        "type": "request",
-                        "action": "cancel-all-orders",
-                        "data": body
-                     }
+            "channel": "trading",
+            "type": "request",
+            "action": "cancel-all-orders",
+            "data": body
+        }
 
         self.logger.info("{}: Sending cancel all request".format(self.config.exchange_name))
         try:

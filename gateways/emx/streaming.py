@@ -3,7 +3,7 @@ import datetime
 
 from logger import logging
 from definitions import (
-    tob, 
+    tob,
     exchange_orders,
     exchange_order,
     order_type,
@@ -44,7 +44,7 @@ class streaming_adapter():
             "modify-rejected": self.process_amend_rejection,
             "canceled": self.process_elim,
             "cancel-rejected": self.process_elim_reject,
-            "filled":   self.process_fill,
+            "filled": self.process_fill,
         }
 
         if self.symbol is None:
@@ -69,12 +69,12 @@ class streaming_adapter():
         signature = self.auth.generate_signature(timestamp, "GET", endpoint, None)
 
         msg = {
-                "type": "subscribe",
-                "channels": ["orders", "trading", "ticker"],
-                "key": self.auth.api_key,
-                "sig": signature.decode().strip(),
-                "timestamp": timestamp
-            }
+            "type": "subscribe",
+            "channels": ["orders", "trading", "ticker"],
+            "key": self.auth.api_key,
+            "sig": signature.decode().strip(),
+            "timestamp": timestamp
+        }
         if self.config.symbol:
             msg["contract_codes"] = self.config.symbol
         else:
@@ -118,7 +118,6 @@ class streaming_adapter():
 
             await msg_callback(res)
             return
-            
 
         if msg.get("channel") == "ticker":
             try:
@@ -130,7 +129,8 @@ class streaming_adapter():
                 return
 
             try:
-                self.positions_mngr.set_mark_price(self.config.exchange_name, msg['data']['contract_code'], float(res.mark_price))
+                self.positions_mngr.set_mark_price(self.config.exchange_name, msg['data']['contract_code'],
+                                                   float(res.mark_price))
             except:
                 pass
 
@@ -291,7 +291,7 @@ class streaming_adapter():
                 ack.instrument = msg["contract_code"]
                 ack.orderid = uid
                 ack.exchangeid = eid
-                ack.fillid =  ""
+                ack.fillid = ""
                 ack.order_type = msg['order_type']
                 ack.side = msg['side']
                 ack.order_qty = float(msg['size'])
@@ -367,7 +367,8 @@ class streaming_adapter():
         try:
             uid = self.shared_storage.eid_to_uid[eid]
         except KeyError:
-            self.logger.warning("{} Got amend reject, but unable to find uid for {}".format(self.config.exchange_name, eid))
+            self.logger.warning(
+                "{} Got amend reject, but unable to find uid for {}".format(self.config.exchange_name, eid))
             return
 
         del self.shared_storage.eids_to_amend[eid]

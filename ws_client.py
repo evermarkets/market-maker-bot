@@ -5,6 +5,7 @@ import aiohttp
 
 from logger import logging
 
+
 class websocket_client():
     def __init__(self, exchange_name=None):
         self.ws = None
@@ -101,4 +102,3 @@ class websocket_client():
             await self.session.close()
         except Exception as err:
             self.logger.exception("Failed to close ws session")
-

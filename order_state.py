@@ -32,7 +32,8 @@ class inactive(state):
     def on_event(self, event):
         if event == event.on_creation:
             return insert_pending()
-        raise StateException("invalid event for the current state. event = {}, state = {}".format(event, self.__class__.__name__))
+        raise StateException(
+            "invalid event for the current state. event = {}, state = {}".format(event, self.__class__.__name__))
         return self
 
 

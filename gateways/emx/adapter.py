@@ -8,6 +8,7 @@ from gateways.emx.streaming import streaming_adapter
 from gateways.emx.shared_storage import shared_storage
 from gateways.emx.auth import auth
 
+
 class emx_adapter(gateway_interface):
     def __init__(self, config):
         super().__init__()
@@ -52,7 +53,6 @@ class emx_adapter(gateway_interface):
 
     async def request_orders(self):
         return await self.execution.request_orders()
-
 
     async def start(self):
         self.started = False

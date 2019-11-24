@@ -30,7 +30,6 @@ from definitions import (
     amend_ack_on_partial
 )
 
-
 from enum import Enum
 from logger import logging
 
@@ -38,8 +37,10 @@ from logger import logging
 def generate_id():
     return str(uuid.uuid4())
 
+
 def sort_orders(orders):
     return sorted(orders, key=lambda order: order.price)
+
 
 class orders_manager():
     MIN_VALUE = 10e-5
@@ -153,7 +154,7 @@ class orders_manager():
             if not elem.orderid:
                 elem.orderid = generate_id()
 
-        for elem in orders: 
+        for elem in orders:
             self.orders[elem.orderid] = elem
             self.live_orders_ids.append(elem.orderid)
             self.update_order_state(elem.orderid, event.on_creation)
@@ -207,7 +208,7 @@ class orders_manager():
             self.logger.error("Invalid orders for the amend; not matching sizes")
             raise Exception("Invalid orders for the amend; not matching sizes")
         for i in range(1, len(new_orders)):
-            if new_orders[i].side is order_side.buy and new_orders[i-1].side is order_side.sell:
+            if new_orders[i].side is order_side.buy and new_orders[i - 1].side is order_side.sell:
                 raise Exception("Self crossing orders detected")
 
         try:
@@ -279,15 +280,15 @@ class orders_manager():
                 orders_to_place.append(new)
             elif isinstance(existing_state, active):
                 if abs(new.quantity - existing.quantity) < self.ORDERS_QTY_DIFF and \
-                    abs(new.price - existing.price) < self.ORDERS_QTY_DIFF: 
+                        abs(new.price - existing.price) < self.ORDERS_QTY_DIFF:
                     self.logger.debug("Order {} will be ignored, no need to amend".format(new.orderid))
                     self.live_orders_ids = [oid for oid in self.live_orders_ids if oid != existing.orderid]
 
                     new.orderid = existing.orderid
                     self.live_orders_ids.append(new.orderid)
-                    self.orders[new.orderid] = new 
+                    self.orders[new.orderid] = new
                 else:
-                    pairs_to_amend[new] = existing 
+                    pairs_to_amend[new] = existing
 
         try:
             await self.cancel_orders(orders_ids_to_cancel)
@@ -341,14 +342,14 @@ class orders_manager():
 
     def is_ready_for_amend(self, orderid):
         return not isinstance(self.orders_states[orderid].state,
-                                (
-                                    inactive, 
-                                    insert_pending, 
-                                    amend_pending, 
-                                    cancel_failed, 
-                                    cancel_pending
-                                )
-                         )
+                              (
+                                  inactive,
+                                  insert_pending,
+                                  amend_pending,
+                                  cancel_failed,
+                                  cancel_pending
+                              )
+                              )
 
     def update_order_state(self, orderid, upd_event):
         if isinstance(upd_event, event) is False:
@@ -363,14 +364,15 @@ class orders_manager():
                 curr_state = self.orders_states[orderid]
             except KeyError:
                 self.logger.warning("{} Order state was not found for orderid = {}".format(
-                                    self.exch_name, orderid))
+                    self.exch_name, orderid))
                 return
 
         if _upd_event == event.on_full_fill:
             _order = self.orders.get(upd_event.orderid)
             if _order:
                 if _order.quantity > upd_event.running_fill_qty:
-                    self.logger.warning("Inflight partial fill was detected. Recorded order {}, full_fill {}".format(_order, upd_event))
+                    self.logger.warning(
+                        "Inflight partial fill was detected. Recorded order {}, full_fill {}".format(_order, upd_event))
                     _upd_event = event.on_fill
         elif _upd_event == event.on_fill:
             try:
@@ -384,7 +386,7 @@ class orders_manager():
             self.logger.exception("{} Invalid state. Order id = {}".format(self.exch_name, orderid))
             raise Exception(
                 "{}. Invalid state. Order id = {}. Reason = {}".format(
-                self.exch_name, orderid, str(err))
+                    self.exch_name, orderid, str(err))
             )
 
     def activate_orders(self, orders_msg):
@@ -432,7 +434,8 @@ class orders_manager():
         return orders
 
     def active_orders_ids(self):
-        return [oid for oid in self.live_orders_ids if isinstance(self.orders_states[oid].state, active) or isinstance(self.orders_states[oid].state, fill)]
+        return [oid for oid in self.live_orders_ids if
+                isinstance(self.orders_states[oid].state, active) or isinstance(self.orders_states[oid].state, fill)]
 
     def get_number_of_active_orders(self):
         return len(self.active_orders_ids())
@@ -452,5 +455,3 @@ class orders_manager():
 
     def get_mapped_order(self, orderid):
         return self.orderid_to_orderid_map[orderid]
-
-

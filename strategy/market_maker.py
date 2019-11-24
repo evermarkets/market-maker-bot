@@ -14,12 +14,13 @@ from definitions import (
     order_side,
     exchange_orders,
     new_order_ack,
-    amend_ack,    
+    amend_ack,
     new_order_nack,
     amend_nack,
     order_fill_ack,
     order_full_fill_ack,
 )
+
 
 class market_maker(strategy_interface):
     TIME_TO_WAIT_SINCE_START_SECS = 10
@@ -116,7 +117,6 @@ class market_maker(strategy_interface):
             self.primary_ob = None
         await self.exchange_adapter.reconnect()
 
-
     async def _cancel_orders(self):
         try:
             await self.orders_manager.cancel_active_orders()
@@ -174,10 +174,10 @@ class market_maker(strategy_interface):
             return True
         return False
 
-
     def _orders_are_ready_for_amend(self):
         known_statuses = self.orders_manager.get_number_of_ready_for_amend()
-        if self.last_amend_time and len(self.orders_manager.live_orders_ids) > 0 and known_statuses != self.num_of_sent_orders:
+        if self.last_amend_time and len(
+                self.orders_manager.live_orders_ids) > 0 and known_statuses != self.num_of_sent_orders:
             return known_statuses
         return True
 
@@ -186,9 +186,9 @@ class market_maker(strategy_interface):
         if self.mid_price_based_calculation:
             mid_price = (self.tob.best_ask_price + self.tob.best_bid_price) / 2.0
             rounded_mid = round(round(mid_price / self.tick_size) * self.tick_size,
-                         self.price_rounding)
+                                self.price_rounding)
 
-            if best_ask - best_bid == 2.0*self.tick_size:
+            if best_ask - best_bid == 2.0 * self.tick_size:
                 best_ask = round(rounded_mid + self.tick_size, self.price_rounding)
                 best_bid = round(rounded_mid - self.tick_size, self.price_rounding)
             elif rounded_mid >= mid_price:
@@ -206,7 +206,7 @@ class market_maker(strategy_interface):
             order.side = order_side.sell
             order.type = order_type.limit
 
-            order.price = round(best_ask + self.tick_size*level, self.price_rounding)
+            order.price = round(best_ask + self.tick_size * level, self.price_rounding)
             order.quantity = qty
             orders.append(order)
 
@@ -217,11 +217,10 @@ class market_maker(strategy_interface):
             order.side = order_side.buy
             order.type = order_type.limit
 
-            order.price = round(best_bid - self.tick_size*level, self.price_rounding)
+            order.price = round(best_bid - self.tick_size * level, self.price_rounding)
             order.quantity = qty
             orders.append(order)
         return orders
-
 
     async def process_market_move(self):
         if self.reconnecting is True:
