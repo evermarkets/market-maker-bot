@@ -21,7 +21,7 @@ strategy:
               ]
 
     cancel_orders_on_start: True
-    stop_strategy_on_error: True
+    stop_strategy_on_error: False
     cancel_orders_on_reconnection: False
 
 adapter:
