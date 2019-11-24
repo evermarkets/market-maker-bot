@@ -57,7 +57,6 @@ class market_maker(strategy_interface):
             "instrument_name",
             "tick_size",
             "price_rounding",
-            "qty_rounding",
             "cancel_orders_on_start",
             "stop_strategy_on_error",
             "cancel_orders_on_reconnection",
@@ -219,7 +218,7 @@ class market_maker(strategy_interface):
             order.type = order_type.limit
 
             order.price = round(self.tob.best_ask_price + self.tick_size*level, self.price_rounding)
-            order.quantity = round(qty, self.qty_rounding)
+            order.quantity = qty
             orders.append(order)
 
         for quote in self.user_bids:
@@ -230,7 +229,7 @@ class market_maker(strategy_interface):
             order.type = order_type.limit
 
             order.price = round(self.tob.best_bid_price - self.tick_size*level, self.price_rounding)
-            order.quantity = round(qty, self.qty_rounding)
+            order.quantity = qty
             orders.append(order)
 
         try:
