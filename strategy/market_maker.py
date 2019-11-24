@@ -55,6 +55,7 @@ class market_maker(strategy_interface):
     def _load_configuration(self, cfg):
         option_names = (
             "instrument_name",
+            "mid_price_based_calculation",
             "tick_size",
             "price_rounding",
             "cancel_orders_on_start",
@@ -180,6 +181,48 @@ class market_maker(strategy_interface):
             return known_statuses
         return True
 
+    def generate_orders(self):
+        best_ask, best_bid = self.tob.best_ask_price, self.tob.best_bid_price
+        if self.mid_price_based_calculation:
+            mid_price = (self.tob.best_ask_price + self.tob.best_bid_price) / 2.0
+            rounded_mid = round(round(mid_price / self.tick_size) * self.tick_size,
+                         self.price_rounding)
+
+            if best_ask - best_bid == 2.0*self.tick_size:
+                best_ask = round(rounded_mid + self.tick_size, self.price_rounding)
+                best_bid = round(rounded_mid - self.tick_size, self.price_rounding)
+            elif rounded_mid >= mid_price:
+                best_ask = rounded_mid
+                best_bid = round(best_ask - self.tick_size, self.price_rounding)
+            else:
+                best_bid = rounded_mid
+                best_ask = round(best_bid + self.tick_size, self.price_rounding)
+
+        orders = []
+        for quote in self.user_asks:
+            level, qty = quote
+            order = order_request()
+            order.instrument_name = self.config.instrument_name
+            order.side = order_side.sell
+            order.type = order_type.limit
+
+            order.price = round(best_ask + self.tick_size*level, self.price_rounding)
+            order.quantity = qty
+            orders.append(order)
+
+        for quote in self.user_bids:
+            level, qty = quote
+            order = order_request()
+            order.instrument_name = self.config.instrument_name
+            order.side = order_side.buy
+            order.type = order_type.limit
+
+            order.price = round(best_bid - self.tick_size*level, self.price_rounding)
+            order.quantity = qty
+            orders.append(order)
+        return orders
+
+
     async def process_market_move(self):
         if self.reconnecting is True:
             self.logger.info("Ongoing reconnection, process_market_move will be stopped")
@@ -209,28 +252,7 @@ class market_maker(strategy_interface):
                 return
             return
 
-        orders = []
-        for quote in self.user_asks:
-            level, qty = quote
-            order = order_request()
-            order.instrument_name = self.config.instrument_name
-            order.side = order_side.sell
-            order.type = order_type.limit
-
-            order.price = round(self.tob.best_ask_price + self.tick_size*level, self.price_rounding)
-            order.quantity = qty
-            orders.append(order)
-
-        for quote in self.user_bids:
-            level, qty = quote
-            order = order_request()
-            order.instrument_name = self.config.instrument_name
-            order.side = order_side.buy
-            order.type = order_type.limit
-
-            order.price = round(self.tob.best_bid_price - self.tick_size*level, self.price_rounding)
-            order.quantity = qty
-            orders.append(order)
+        orders = self.generate_orders()
 
         try:
             await self.orders_manager.amend_active_orders(orders)
