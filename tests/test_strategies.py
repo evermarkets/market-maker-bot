@@ -7,6 +7,7 @@ from strategy.market_maker import market_maker
 from gateways import gateway_interface
 
 from definitions import (
+    tob,
     new_order_ack,
     new_order_nack,
     order_elim_ack,
@@ -110,6 +111,8 @@ def cfg_strategy_fixture():
 
     b.name = "market_maker"
     b.instrument_name = "TEST-PERP"
+    b.mid_price_based_calculation = False
+
     b.tick_size = 1
     b.price_rounding = 2
     b.cancel_orders_on_start = False
@@ -117,8 +120,8 @@ def cfg_strategy_fixture():
     b.cancel_orders_on_reconnection = True
 
     b.orders = DefaultMunch()
-    b.orders.asks = [[1,1]]
-    b.orders.bids = [[1,1]]
+    b.orders.asks = [[0,1]]
+    b.orders.bids = [[0,1]]
     return b
 
 
@@ -129,3 +132,102 @@ async def test_maker_init(cfg_strategy_fixture):
     except Exception:
         assert False
 
+    
+@pytest.mark.asyncio
+async def test_maker_rounding_tob_based(cfg_strategy_fixture):
+    try:
+        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+    except Exception:
+        assert False
+
+    _tob = tob()
+    _tob.exchange = "test_exchange"
+    _tob.product = "test-perp"
+    _tob.best_bid_price = 99.0
+    _tob.best_bid_qty = 1
+    _tob.best_ask_price = 101.0
+    _tob.best_ask_qty = 1
+    _tob.timestamp = 0.0
+
+    strategy.tob = _tob
+
+    orders = strategy.generate_orders()
+
+    assert orders[0].price == _tob.best_ask_price
+    assert orders[1].price == _tob.best_bid_price
+
+
+@pytest.mark.asyncio
+async def test_maker_rounding_mid_based_1(cfg_strategy_fixture):
+    cfg_strategy_fixture.mid_price_based_calculation = True
+
+    try:
+        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+    except Exception:
+        assert False
+
+    _tob = tob()
+    _tob.exchange = "test_exchange"
+    _tob.product = "test-perp"
+    _tob.best_bid_price = 100.5
+    _tob.best_bid_qty = 1
+    _tob.best_ask_price = 101.0
+    _tob.best_ask_qty = 1
+    _tob.timestamp = 0.0
+
+    strategy.tob = _tob
+
+    orders = strategy.generate_orders()
+
+    assert orders[0].price == 101
+    assert orders[1].price == 100
+
+@pytest.mark.asyncio
+async def test_maker_rounding_mid_based_2(cfg_strategy_fixture):
+    cfg_strategy_fixture.mid_price_based_calculation = True
+
+    try:
+        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+    except Exception:
+        assert False
+
+    _tob = tob()
+    _tob.exchange = "test_exchange"
+    _tob.product = "test-perp"
+    _tob.best_bid_price = 99.0
+    _tob.best_bid_qty = 1
+    _tob.best_ask_price = 101.0
+    _tob.best_ask_qty = 1
+    _tob.timestamp = 0.0
+
+    strategy.tob = _tob
+
+    orders = strategy.generate_orders()
+
+    assert orders[0].price == 101
+    assert orders[1].price == 99
+
+@pytest.mark.asyncio
+async def test_maker_rounding_mid_based_3(cfg_strategy_fixture):
+    cfg_strategy_fixture.mid_price_based_calculation = True
+
+    try:
+        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+    except Exception:
+        assert False
+
+    _tob = tob()
+    _tob.exchange = "test_exchange"
+    _tob.product = "test-perp"
+    _tob.best_bid_price = 95.0
+    _tob.best_bid_qty = 1
+    _tob.best_ask_price = 105.0
+    _tob.best_ask_qty = 1
+    _tob.timestamp = 0.0
+
+    strategy.tob = _tob
+
+    orders = strategy.generate_orders()
+
+    assert orders[0].price == 100
+    assert orders[1].price == 99
