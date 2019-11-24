@@ -353,7 +353,7 @@ class execution_adapter():
             "data": body
         }
 
-        self.logger.info("{}: Sending cancel all request".format(self.config.exchange_name))
+        self.logger.info("Sending cancel all request")
         try:
             await self.ws.ws.send_str(json.dumps(final_data))
         except aiohttp.client_exceptions.ClientConnectorError as err:

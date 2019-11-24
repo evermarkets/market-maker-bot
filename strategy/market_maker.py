@@ -47,7 +47,9 @@ class market_maker(strategy_interface):
         self.last_amend_time = None
         self.reconnecting = False
 
+        self.active = True
         self.tob = None
+        self.num_of_sent_orders = 0
         self.cancel_all_request_was_sent = False
 
         self.user_asks = self.config.orders.asks
@@ -81,18 +83,18 @@ class market_maker(strategy_interface):
         count = 0
         while count < 5:
             try:
-                await self._handle_exception(err_msg, exchange_name, self.stop_strategy_on_error)
+                await self._handle_exception(err_msg, self.stop_strategy_on_error)
                 return True
             except Exception as err:
-                self.logger.exception("{} Exception raised {}".format(err))
+                self.logger.exception("Exception raised {}".format(err))
                 err_msg = err
 
             count += 1
             self.logger.warning("reconnection failed, performing new attempt")
-        raise Exception("{}, handle_exception was unsuccessflully tried 5 times".format(get_filename_and_lineno()))
+        raise Exception("{}, handle_exception was unsuccessfully tried 5 times".format(get_filename_and_lineno()))
 
     async def _handle_exception(self, err_msg, stop_strategy):
-        self.logger.warning("{} Gateway will be reconnected because of {}".format(err_msg))
+        self.logger.warning("Gateway will be reconnected because of {}".format(err_msg))
         if stop_strategy is True:
             await self.stop_strategy()
 
@@ -103,8 +105,19 @@ class market_maker(strategy_interface):
 
         self.reconnecting = False
 
-        self.logger.warning("{} Gateway was reconnected because of {}".format(err_msg))
+        self.logger.warning("Gateway was reconnected because of {}".format(err_msg))
         return True
+
+    async def stop_strategy(self):
+        try:
+            self.logger.info("Cancelling orders because strategy is stopped")
+            await self._cancel_orders()
+        except Exception as err:
+            self.logger.warning("stop_strategy failed on {}".format(err))
+            raise
+
+        self.active = False
+
 
     async def reset(self, reset_reason):
         self.cancel_all_request_was_sent = False
@@ -114,8 +127,8 @@ class market_maker(strategy_interface):
             self.cancel_all_request_was_sent = True
             self.last_amend_time = None
             self.num_of_sent_orders = 0
-            self.primary_ob = None
         await self.exchange_adapter.reconnect()
+
 
     async def _cancel_orders(self):
         try:
@@ -137,7 +150,10 @@ class market_maker(strategy_interface):
         self.orders_manager.activate_orders(orders_msg)
 
     async def on_market_update(self, update):
-        if isinstance(update, tob):
+        if self.active is False:
+            self.logger.info("Strategy is not active, update will be ignored")
+            return
+        elif isinstance(update, tob):
             if self.tob is None:
                 self.update_orders = True
                 self.tob = update
@@ -159,7 +175,10 @@ class market_maker(strategy_interface):
                 type(update), str(err)))
 
     async def run(self):
-        if self.tob is None:
+        if self.active is False:
+            self.logger.info("Strategy is not active, method run will be stopped")
+            return
+        elif self.tob is None:
             return
         elif self.update_orders is False:
             return
@@ -223,7 +242,10 @@ class market_maker(strategy_interface):
         return orders
 
     async def process_market_move(self):
-        if self.reconnecting is True:
+        if self.active is False:
+            self.logger.info("Strategy is not active, process_market_move will be stopped")
+            return
+        elif self.reconnecting is True:
             self.logger.info("Ongoing reconnection, process_market_move will be stopped")
             return
 

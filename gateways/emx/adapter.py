@@ -85,7 +85,7 @@ class emx_adapter(gateway_interface):
         else:
             self.logger.info("Cancellation request won't be sent")
 
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(2.0)
         self.started = True
 
     def is_ready(self):

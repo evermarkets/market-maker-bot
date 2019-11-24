@@ -8,5 +8,5 @@ class strategy_interface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def handle_exception(self):
+    async def handle_exception(self, err_msg):
         pass
