@@ -111,6 +111,8 @@ def cfg_strategy_fixture():
     b.name = "market_maker"
     b.instrument_name = "TEST-PERP"
     b.tick_size = 1
+    b.price_rounding = 2
+    b.qty_rounding = 2
     b.cancel_orders_on_start = False
     b.stop_strategy_on_error = True
     b.cancel_orders_on_reconnection = True
