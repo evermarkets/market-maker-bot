@@ -6,6 +6,7 @@ strategy:
     name: market_maker
     instrument_name: 'ETH-BTC'
 
+    mid_price_based_calculation: False
     tick_size: 0.000001
     price_rounding: 6
 
