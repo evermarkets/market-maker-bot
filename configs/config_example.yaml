@@ -9,8 +9,7 @@ strategy:
     instrument_name: 'BTC-PERP'
 
     tick_size: 0.5
-    price_rounding: 2
-    qty_rounding: 2
+    price_rounding: 4
 
     orders:
         asks: [
