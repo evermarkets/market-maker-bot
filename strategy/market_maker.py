@@ -54,7 +54,6 @@ class MarketMaker(strategy_interface):
             'tick_size',
             'price_rounding',
             'stop_strategy_on_error',
-            'cancel_orders_on_reconnection',
         )
         for option_name in option_names:
             option = getattr(cfg, option_name)
@@ -112,11 +111,10 @@ class MarketMaker(strategy_interface):
     async def reset(self, reset_reason):
         self.cancel_all_request_was_sent = False
 
-        if self.cancel_orders_on_reconnection:
-            await self._cancel_orders()
-            self.cancel_all_request_was_sent = True
-            self.last_amend_time = None
-            self.num_of_sent_orders = 0
+        await self._cancel_orders()
+        self.cancel_all_request_was_sent = True
+        self.last_amend_time = None
+        self.num_of_sent_orders = 0
         await self.exchange_adapter.reconnect()
 
     async def _cancel_orders(self):
@@ -130,7 +128,7 @@ class MarketMaker(strategy_interface):
             return
 
     async def process_active_orders_on_start(self, orders_msg):
-        if len(orders_msg.bids + orders_msg.asks) == 0 or self.cancel_orders_on_reconnection:
+        if len(orders_msg.bids + orders_msg.asks) == 0:
             return
         elif len(orders_msg.bids + orders_msg.asks) % 2 != 0:
             await self._cancel_orders()
