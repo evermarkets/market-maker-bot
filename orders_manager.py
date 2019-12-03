@@ -51,7 +51,7 @@ class OrdersManager:
         try:
             self.exchange_name = self.exchange_adapter.config.name
         except AttributeError:
-            self.exchange_name = ""
+            self.exchange_name = ''
 
         self.orders = {}
         self.live_orders_ids = []
@@ -76,30 +76,32 @@ class OrdersManager:
         self.logger = logging.getLogger()
 
     def reset(self):
-        self.logger.info("{} orders manager will be reset".format(self.exchange_name))
+        self.logger.info(f'{self.exchange_name} orders manager will be reset')
 
         self.orders = {}
         self.live_orders_ids = []
         self.orders_states = {}
 
     async def place_order(self, order):
-        if not order.order_id: order.order_id = generate_id()
+        if not order.order_id:
+            order.order_id = generate_id()
+
         self.orders[order.order_id] = order
         self.update_order_state(order.order_id, event.on_creation)
 
         try:
             res = await self.exchange_adapter.send_order(order)
         except Exception as err:
-            self.logger.error("Order placement failed, err {}".format(err))
+            self.logger.error(f'Order placement failed, {err}')
             raise
         if res.success is False:
-            self.logger.error("Order placement failed, err {}".format(res.msg))
-            raise Exception("Orders placement failed, err {}".format(res.msg))
+            self.logger.error(f'Order placement failed, {res.msg}')
+            raise Exception(f'Orders placement failed, err {res.msg}')
         self.live_orders_ids.append(order.order_id)
 
     async def place_orders(self, orders):
         if len(orders) == 0:
-            self.logger.debug("No orders to place")
+            self.logger.debug('No orders to place')
             return
 
         for elem in orders:
@@ -114,12 +116,12 @@ class OrdersManager:
         try:
             res = await self.exchange_adapter.send_orders(orders)
         except Exception as err:
-            self.logger.error("Bulk orders placement failed, err {}".format(err))
+            self.logger.error(f'Bulk orders placement failed, {err}')
             raise
         if res.success is False:
-            self.logger.error("Bulk orders placement failed, err {}".format(res.msg))
-            raise Exception("Bulk orders placement failed, err {}".format(res.msg))
-        self.logger.info("Multiple orders were placed")
+            self.logger.error(f'Bulk orders placement failed, err {res.msg}')
+            raise Exception(f'Bulk orders placement failed, err {res.msg}')
+        self.logger.info('Multiple orders were placed')
 
     async def amend_order(self, new, existing):
         self.orders[new.order_id] = new
@@ -131,11 +133,11 @@ class OrdersManager:
         try:
             res = await self.exchange_adapter.amend_order(new, existing)
         except Exception as err:
-            self.logger.error("Order amend failed, err {}".format(err))
+            self.logger.error(f'Order amend failed, err {err}')
             raise
         if res.success is False:
-            self.logger.error("Order amend failed, msg={}".format(res.msg))
-            raise GatewayError("Orders amend failed, msg={}".format(res.msg))
+            self.logger.error(f'Order amend failed, msg={res.msg}')
+            raise Exception(f'Orders amend failed, msg={res.msg}')
         self.live_orders_ids.remove(existing.order_id)
         self.live_orders_ids.append(new.order_id)
 
@@ -143,29 +145,30 @@ class OrdersManager:
         try:
             existing_orders = [self.orders[oid] for oid in self.live_orders_ids]
         except KeyError as err:
-            raise Exception("Failed to grad existing orders".format(err))
+            raise Exception(f'Failed to grad existing orders {err}')
         await self.amend_orders(new_orders, existing_orders)
 
     async def _amend_orders(self, new_orders, existing_orders):
         if len(new_orders) == 0:
-            self.logger.debug("No need to send a bulk amend, no orders to be amended")
+            self.logger.debug('No need to send a bulk amend, no orders to be amended')
             return
 
         new_place = sort_orders(new_orders)
         existing_orders = sort_orders(existing_orders)
         if len([i for i, k in zip(new_orders, existing_orders) if i.side != k.side]) > 0:
-            self.logger.error("Invalid orders for the amend")
-            raise Exception("Invalid orders for the amend")
+            self.logger.error('Invalid orders for the amend')
+            raise Exception('Invalid orders for the amend')
         elif len(new_orders) != len(existing_orders):
-            self.logger.error("Invalid orders for the amend; not matching sizes")
-            raise Exception("Invalid orders for the amend; not matching sizes")
+            self.logger.error('Invalid orders for the amend; not matching sizes')
+            raise Exception('Invalid orders for the amend; not matching sizes')
         for i in range(1, len(new_orders)):
             if new_orders[i].side is order_side.buy and new_orders[i - 1].side is order_side.sell:
-                raise Exception("Self crossing orders detected")
+                raise Exception('Self crossing orders detected')
 
         try:
             new_bid = [order.price for order in new_orders if order.side is order_side.buy][-1]
-            existing_ask = [order.price for order in existing_orders if order.side is order_side.sell][0]
+            existing_ask = \
+            [order.price for order in existing_orders if order.side is order_side.sell][0]
             if new_bid > existing_ask:
                 new_orders.reverse()
                 existing_orders.reverse()
@@ -179,7 +182,7 @@ class OrdersManager:
             try:
                 res = await self.exchange_adapter.amend_orders(new_orders, existing_orders)
             except Exception as err:
-                self.logger.error("Orders amend failed, err {}".format(err))
+                self.logger.error(f'Orders amend failed, err {err}')
                 raise
 
         for order in existing_orders: self.live_orders_ids.remove(order.order_id)
@@ -206,13 +209,13 @@ class OrdersManager:
 
         for new, existing in zip(new_orders, existing_orders):
             if new.side != existing.side:
-                self.logger.warning("Order sides are not the same. Orderid {}".format(existing.order_id))
+                self.logger.warning(f'Order sides are not the same. Order id {existing.order_id}')
 
             existing_state = None
             try:
                 existing_state = self.orders_states[existing.order_id].state
             except KeyError:
-                self.logger.debug("Order status was not found. Orderid {}".format(existing.order_id))
+                self.logger.debug(f'Order status was not found. Order id {existing.order_id}')
 
             if isinstance(existing_state, fill):
                 orders_to_place.append(new)
@@ -222,9 +225,10 @@ class OrdersManager:
                 try:
                     del self.ids_to_fills[existing.order_id]
                 except KeyError:
-                    self.logger.info("Order {} was not found in ids_to_fills".format(existing.order_id))
+                    self.logger.info(f'Order {existing.order_id} was not found in ids_to_fills')
                 except Exception:
-                    self.logger.info("Order {} failed to be removed from ids_to_fills".format(existing.order_id))
+                    self.logger.info(
+                        f'Order {existing.order_id} failed to be removed from ids_to_fills')
 
                 orders_to_place.append(new)
             elif isinstance(existing_state, cancelled) or isinstance(existing_state, full_fill):
@@ -233,8 +237,9 @@ class OrdersManager:
             elif isinstance(existing_state, active):
                 if abs(new.quantity - existing.quantity) < self.ORDERS_QTY_DIFF and \
                         abs(new.price - existing.price) < self.ORDERS_QTY_DIFF:
-                    self.logger.debug("Order {} will be ignored, no need to amend".format(new.order_id))
-                    self.live_orders_ids = [oid for oid in self.live_orders_ids if oid != existing.order_id]
+                    self.logger.debug(f'Order {new.order_id} will be ignored, no need to amend')
+                    self.live_orders_ids = [oid for oid in self.live_orders_ids if
+                                            oid != existing.order_id]
 
                     new.order_id = existing.order_id
                     self.live_orders_ids.append(new.order_id)
@@ -247,7 +252,7 @@ class OrdersManager:
             await self.place_orders(orders_to_place)
             await self._amend_orders(list(pairs_to_amend.keys()), list(pairs_to_amend.values()))
         except Exception as err:
-            self.logger.error("Amend logic failed {}".format(err))
+            self.logger.error(f'Amend logic failed {err}')
             raise
 
     async def cancel_order(self, order_id):
@@ -256,22 +261,23 @@ class OrdersManager:
         try:
             res = await self.exchange_adapter.cancel_order(order_id)
         except Exception as err:
-            self.logger.error("Order cancellation failed, err {}".format(err))
+            self.logger.error(f'Order cancellation failed, err {err}')
             raise
         if res.success is False:
-            self.logger.error("Orders cancellation failed, msg={}".format(res.msg))
-            raise GatewayError("Orders cancellation failed, msg={}".format(res.msg))
+            self.logger.error(f'Orders cancellation failed, msg={res.msg}')
+            raise Exception(f'Orders cancellation failed, msg={res.msg}')
         try:
             self.live_orders_ids.remove(order_id)
         except ValueError:
             pass
-        self.logger.debug("Order was cancelled. Orderid = {}".format(order_id))
+        self.logger.debug(f'Order was cancelled. Order id = {order_id}')
 
     async def cancel_orders(self, order_ids):
         try:
-            order_ids = [oid for oid in order_ids if isinstance(self.orders_states[oid], full_fill) is False]
+            order_ids = [oid for oid in order_ids if
+                         isinstance(self.orders_states[oid], full_fill) is False]
         except KeyError as err:
-            self.logger.error("Failed to find an order for the cancelation {}".format(err))
+            self.logger.error(f'Failed to find an order for the cancellation {err}')
             return
 
         if len(order_ids) == 0:
@@ -282,14 +288,14 @@ class OrdersManager:
             try:
                 res = await self.cancel_order(oid)
             except Exception as err:
-                self.logger.error("Order cancellation failed, err {}".format(err))
+                self.logger.error(f'Order cancellation failed. {err}')
                 raise
 
     async def cancel_active_orders(self):
         try:
             res = await self.exchange_adapter.cancel_active_orders()
         except Exception as err:
-            self.logger.error("Orders active orders cancellation failed, err {}".format(err))
+            self.logger.error(f'Orders active orders cancellation failed. {err}')
             raise
 
     def is_ready_for_amend(self, order_id):
@@ -315,8 +321,8 @@ class OrdersManager:
             try:
                 curr_state = self.orders_states[order_id]
             except KeyError:
-                self.logger.warning("{} Order state was not found for order_id = {}".format(
-                    self.exchange_name, order_id))
+                self.logger.warning(
+                    f'{self.exchange_name} Order state was not found for order_id = {order_id}')
                 return
 
         if _upd_event == event.on_full_fill:
@@ -324,7 +330,8 @@ class OrdersManager:
             if _order:
                 if _order.quantity > upd_event.running_fill_qty:
                     self.logger.warning(
-                        "Inflight partial fill was detected. Recorded order {}, full_fill {}".format(_order, upd_event))
+                        f'Inflight partial fill was detected.'
+                        f' Recorded order {_order}, full_fill {upd_event}')
                     _upd_event = event.on_fill
         elif _upd_event == event.on_fill:
             try:
@@ -334,34 +341,34 @@ class OrdersManager:
 
         try:
             curr_state.on_event(_upd_event)
-        except StateException as err:
-            self.logger.exception("{} Invalid state. Order id = {}".format(self.exchange_name, order_id))
+        except Exception as err:
+            self.logger.exception(f'{self.exchange_name} Invalid state. Order id = {order_id}')
             raise Exception(
-                "{}. Invalid state. Order id = {}. Reason = {}".format(
-                    self.exchange_name, order_id, str(err))
-            )
+                f'{self.exchange_name}. Invalid state. Order id = {order_id}. Reason = {err}')
 
     def activate_orders(self, orders_msg):
-        self.logger.info("activate_orders started, orders_msg: {}".format(orders_msg))
+        self.logger.info(f'activate_orders started, orders_msg: {orders_msg}')
 
         if isinstance(orders_msg, exchange_orders):
-            exch_orders = sort_orders(orders_msg.bids + orders_msg.asks)
+            exchange_orders_ = sort_orders(orders_msg.bids + orders_msg.asks)
         else:
-            exch_orders = orders_msg
+            exchange_orders_ = orders_msg
 
         orders = []
-        for exch_order in exch_orders:
+        for exchange_order__ in exchange_orders_:
             order = order_request()
-            order.side = exch_order.side
-            order.type = exch_order.type
-            order.price = exch_order.price
-            order.quantity = exch_order.quantity
+            order.side = exchange_order__.side
+            order.type = exchange_order__.type
+            order.price = exchange_order__.price
+            order.quantity = exchange_order__.quantity
             orders.append(order)
 
-        for elem, exch_elem in zip(orders, exch_orders):
+        for elem, exchange_elem in zip(orders, exchange_orders_):
             elem.order_id = generate_id()
-            self.exchange_adapter.storage.uid_to_eid[elem.order_id] = exch_elem.exchange_order_id
-            self.exchange_adapter.storage.eid_to_uid[exch_elem.exchange_order_id] = elem.order_id
+            self.exchange_adapter.storage.uid_to_eid[
+                elem.order_id] = exchange_elem.exchange_order_id
+            self.exchange_adapter.storage.eid_to_uid[
+                exchange_elem.exchange_order_id] = elem.order_id
 
             self.orders[elem.order_id] = elem
             self.live_orders_ids.append(elem.order_id)
@@ -371,14 +378,14 @@ class OrdersManager:
             self.update_order_state(elem.order_id, event.on_amend)
             self.update_order_state(elem.order_id, event.on_amend_ack)
 
-            if exch_elem.filled_quantity > 0.0:
+            if exchange_elem.filled_quantity > 0.0:
                 _fill = order_fill_ack()
-                _fill.instrument = ""
+                _fill.instrument = ''
                 _fill.order_id = elem.order_id
-                _fill.exchange_id = exch_elem.exchange_order_id
-                _fill.running_fill_qty = exch_elem.filled_quantity
-                _fill.incremental_fill_qty = exch_elem.filled_quantity
-                _fill.order_qty = exch_elem.quantity
+                _fill.exchange_id = exchange_elem.exchange_order_id
+                _fill.running_fill_qty = exchange_elem.filled_quantity
+                _fill.incremental_fill_qty = exchange_elem.filled_quantity
+                _fill.order_qty = exchange_elem.quantity
 
                 self.ids_to_fills[elem.order_id] = _fill
                 self.update_order_state(elem.order_id, event.on_fill)
@@ -387,7 +394,8 @@ class OrdersManager:
 
     def active_orders_ids(self):
         return [oid for oid in self.live_orders_ids if
-                isinstance(self.orders_states[oid].state, active) or isinstance(self.orders_states[oid].state, fill)]
+                isinstance(self.orders_states[oid].state, active) or isinstance(
+                    self.orders_states[oid].state, fill)]
 
     def get_number_of_active_orders(self):
         return len(self.active_orders_ids())
