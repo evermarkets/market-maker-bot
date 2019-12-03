@@ -1,5 +1,3 @@
-#Configuration example
-
 logger:
     level: INFO
     name: mm_bot_logger
@@ -22,9 +20,7 @@ strategy:
                 [11, 0.01]
               ]
 
-    cancel_orders_on_start: True
     stop_strategy_on_error: False
-    cancel_orders_on_reconnection: False
 
 adapter:
     api_key: ''
