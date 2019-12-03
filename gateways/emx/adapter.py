@@ -81,7 +81,7 @@ class EmxAdapter(GatewayInterface):
             count += 1
             await asyncio.sleep(0.2)
 
-        if self.cancel_orders_on_start is True:
+        if self.cancel_orders_on_start:
             res = await self.cancel_active_orders()
             if res.success is False:
                 raise Exception(f'{self.config.name} Existing orders were not cancelled')

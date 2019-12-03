@@ -31,10 +31,7 @@ class MarketMaker(strategy_interface):
         self.exchange_adapter.set_order_update_callback(self.on_market_update)
         self.orders_manager = OrdersManager(self.exchange_adapter)
 
-        if self.cancel_orders_on_start is True:
-            self.exchange_adapter.cancel_orders_on_start = True
-        else:
-            self.exchange_adapter.cancel_orders_on_start = False
+        self.exchange_adapter.cancel_orders_on_start = True
 
         self.update_orders = False
 
@@ -56,7 +53,6 @@ class MarketMaker(strategy_interface):
             'mid_price_based_calculation',
             'tick_size',
             'price_rounding',
-            'cancel_orders_on_start',
             'stop_strategy_on_error',
             'cancel_orders_on_reconnection',
         )
@@ -78,7 +74,7 @@ class MarketMaker(strategy_interface):
         count = 0
         while count < 5:
             try:
-                await self._handle_exception(err_msg, self.stop_strategy_on_error)
+                await self._handle_exception(err_msg)
                 return True
             except Exception as err:
                 self.logger.exception(f'Exception raised {err}')
@@ -88,9 +84,9 @@ class MarketMaker(strategy_interface):
             self.logger.warning('reconnection failed, performing new attempt')
         raise Exception(f'handle_exception was unsuccessfully tried 5 times')
 
-    async def _handle_exception(self, err_msg, stop_strategy):
+    async def _handle_exception(self, err_msg):
         self.logger.warning(f'Gateway will be reconnected because of {err_msg}')
-        if stop_strategy is True:
+        if self.stop_strategy_on_error is True:
             await self.stop_strategy()
 
         self.reconnecting = True
@@ -134,7 +130,7 @@ class MarketMaker(strategy_interface):
             return
 
     async def process_active_orders_on_start(self, orders_msg):
-        if len(orders_msg.bids + orders_msg.asks) == 0 or self.cancel_orders_on_start is True:
+        if len(orders_msg.bids + orders_msg.asks) == 0 or self.cancel_orders_on_reconnection:
             return
         elif len(orders_msg.bids + orders_msg.asks) % 2 != 0:
             await self._cancel_orders()
