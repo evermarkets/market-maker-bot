@@ -3,7 +3,7 @@ import pytest
 import datetime
 from munch import DefaultMunch
 
-from orders_manager import orders_manager
+from orders_manager import OrdersManager
 from gateways import gateway_interface
 
 from definitions import (
@@ -13,9 +13,9 @@ from definitions import (
     order_side,
     exchange_orders,
     new_order_ack,
-    new_order_nack,
+    new_order_rejection,
     order_elim_ack,
-    order_elim_nack,
+    order_elim_rejection,
     order_fill_ack,
     order_full_fill_ack,
 )
@@ -27,7 +27,7 @@ class bittest_storage():
         self.eid_to_uid = {}
 
 
-class bittest_adapter(gateway_interface.gateway_interface):
+class bittest_adapter(gateway_interface.GatewayInterface):
 
     def __init__(self):
         super().__init__()
@@ -111,7 +111,7 @@ class bittest_adapter(gateway_interface.gateway_interface):
 async def test_place_orders_1():
     adapter = bittest_adapter()
 
-    om = orders_manager(adapter)
+    om = OrdersManager(adapter)
 
     buy_order = order_request()
     buy_order.side = order_side.buy

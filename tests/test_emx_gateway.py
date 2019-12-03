@@ -8,9 +8,9 @@ from gateways.emx.shared_storage import shared_storage
 
 from definitions import (
     new_order_ack,
-    new_order_nack,
+    new_order_rejection,
     order_elim_ack,
-    order_elim_nack,
+    order_elim_rejection,
     order_fill_ack,
     order_full_fill_ack,
 )
@@ -75,7 +75,7 @@ async def test_streaming_fill(cfg_fixture):
 
     strg = shared_storage()
     strg.eid_to_uid["475cc533-7248-4266-87ab-3cb82b64b4c7"] = "test_uid"
-    adapter = streaming.streaming_adapter(cfg_fixture, None, strg)
+    adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
     clb = Callback()
     clb.type_to_check = order_fill_ack
@@ -119,7 +119,7 @@ async def test_streaming_multiple_fills(cfg_fixture):
 
     strg = shared_storage()
     strg.eid_to_uid["475cc533-7248-4266-87ab-3cb82b64b4c7"] = "test_uid"
-    adapter = streaming.streaming_adapter(cfg_fixture, None, strg)
+    adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
     clb = Callback()
     clb.type_to_check = order_fill_ack
@@ -191,7 +191,7 @@ async def test_streaming_full_fill(cfg_fixture):
 
     strg = shared_storage()
     strg.eid_to_uid["475cc533-7248-4266-87ab-3cb82b64b4c7"] = "test_uid"
-    adapter = streaming.streaming_adapter(cfg_fixture, None, strg)
+    adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
     clb = Callback()
     clb.type_to_check = order_full_fill_ack

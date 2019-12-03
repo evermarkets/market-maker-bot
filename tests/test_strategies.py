@@ -3,15 +3,15 @@ import pytest
 import datetime
 from munch import DefaultMunch
 
-from strategy.market_maker import market_maker
+from strategy.market_maker import MarketMaker
 from gateways import gateway_interface
 
 from definitions import (
     tob,
     new_order_ack,
-    new_order_nack,
+    new_order_rejection,
     order_elim_ack,
-    order_elim_nack,
+    order_elim_rejection,
     order_fill_ack,
     order_full_fill_ack,
 )
@@ -23,7 +23,7 @@ class bittest_storage():
         self.eid_to_uid = {}
 
 
-class bittest_adapter(gateway_interface.gateway_interface):
+class bittest_adapter(gateway_interface.GatewayInterface):
 
     def __init__(self):
         super().__init__()
@@ -129,7 +129,7 @@ def cfg_strategy_fixture():
 @pytest.mark.asyncio
 async def test_maker_init(cfg_strategy_fixture):
     try:
-        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+        strategy = MarketMaker(cfg_strategy_fixture, bittest_adapter())
     except Exception:
         assert False
 
@@ -137,7 +137,7 @@ async def test_maker_init(cfg_strategy_fixture):
 @pytest.mark.asyncio
 async def test_maker_rounding_tob_based(cfg_strategy_fixture):
     try:
-        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+        strategy = MarketMaker(cfg_strategy_fixture, bittest_adapter())
     except Exception:
         assert False
 
@@ -163,7 +163,7 @@ async def test_maker_rounding_mid_based_1(cfg_strategy_fixture):
     cfg_strategy_fixture.mid_price_based_calculation = True
 
     try:
-        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+        strategy = MarketMaker(cfg_strategy_fixture, bittest_adapter())
     except Exception:
         assert False
 
@@ -189,7 +189,7 @@ async def test_maker_rounding_mid_based_2(cfg_strategy_fixture):
     cfg_strategy_fixture.mid_price_based_calculation = True
 
     try:
-        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+        strategy = MarketMaker(cfg_strategy_fixture, bittest_adapter())
     except Exception:
         assert False
 
@@ -215,7 +215,7 @@ async def test_maker_rounding_mid_based_3(cfg_strategy_fixture):
     cfg_strategy_fixture.mid_price_based_calculation = True
 
     try:
-        strategy = market_maker(cfg_strategy_fixture, bittest_adapter())
+        strategy = MarketMaker(cfg_strategy_fixture, bittest_adapter())
     except Exception:
         assert False
 
