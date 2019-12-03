@@ -1,5 +1,4 @@
 import time
-import asyncio
 import traceback
 
 from .strategy_interface import strategy_interface
@@ -13,12 +12,8 @@ from definitions import (
     order_type,
     order_side,
     exchange_orders,
-    new_order_ack,
-    amend_ack,
     new_order_rejection,
     amend_rejection,
-    order_fill_ack,
-    order_full_fill_ack,
 )
 
 
@@ -57,28 +52,28 @@ class MarketMaker(strategy_interface):
 
     def _load_configuration(self, cfg):
         option_names = (
-            "instrument_name",
-            "mid_price_based_calculation",
-            "tick_size",
-            "price_rounding",
-            "cancel_orders_on_start",
-            "stop_strategy_on_error",
-            "cancel_orders_on_reconnection",
+            'instrument_name',
+            'mid_price_based_calculation',
+            'tick_size',
+            'price_rounding',
+            'cancel_orders_on_start',
+            'stop_strategy_on_error',
+            'cancel_orders_on_reconnection',
         )
         for option_name in option_names:
             option = getattr(cfg, option_name)
             if option is None:
-                self.logger.error("%s was not found", option_name)
-                raise Exception("{0} was not found".format(option_name))
+                self.logger.error(f'{option_name} was not found')
+                raise Exception(f'{option_name} was not found')
             setattr(self, option_name, option)
 
     async def handle_exception(self, err_msg):
-        self.logger.error("handle_exception traceback: {}".format(err_msg))
+        self.logger.error(f'handle_exception traceback: {err_msg}')
         for line in traceback.format_stack():
             self.logger.error(line.strip())
 
         stack_str = traceback.format_stack()
-        self.logger.error("additional handle_exception traceback: {}".format(stack_str))
+        self.logger.error(f'additional handle_exception traceback: {stack_str}')
 
         count = 0
         while count < 5:
@@ -86,15 +81,15 @@ class MarketMaker(strategy_interface):
                 await self._handle_exception(err_msg, self.stop_strategy_on_error)
                 return True
             except Exception as err:
-                self.logger.exception("Exception raised {}".format(err))
+                self.logger.exception(f'Exception raised {err}')
                 err_msg = err
 
             count += 1
-            self.logger.warning("reconnection failed, performing new attempt")
-        raise Exception("{}, handle_exception was unsuccessfully tried 5 times".format(get_filename_and_lineno()))
+            self.logger.warning('reconnection failed, performing new attempt')
+        raise Exception(f'handle_exception was unsuccessfully tried 5 times')
 
     async def _handle_exception(self, err_msg, stop_strategy):
-        self.logger.warning("Gateway will be reconnected because of {}".format(err_msg))
+        self.logger.warning(f'Gateway will be reconnected because of {err_msg}')
         if stop_strategy is True:
             await self.stop_strategy()
 
@@ -105,19 +100,18 @@ class MarketMaker(strategy_interface):
 
         self.reconnecting = False
 
-        self.logger.warning("Gateway was reconnected because of {}".format(err_msg))
+        self.logger.warning(f'Gateway was reconnected because of {err_msg}')
         return True
 
     async def stop_strategy(self):
         try:
-            self.logger.info("Cancelling orders because strategy is stopped")
+            self.logger.info('Cancelling orders because strategy is stopped')
             await self._cancel_orders()
         except Exception as err:
-            self.logger.warning("stop_strategy failed on {}".format(err))
+            self.logger.warning(f'stop_strategy failed on {err}')
             raise
 
         self.active = False
-
 
     async def reset(self, reset_reason):
         self.cancel_all_request_was_sent = False
@@ -129,15 +123,14 @@ class MarketMaker(strategy_interface):
             self.num_of_sent_orders = 0
         await self.exchange_adapter.reconnect()
 
-
     async def _cancel_orders(self):
         try:
             await self.orders_manager.cancel_active_orders()
         except Exception as err:
             res = await self.handle_exception(err)
             if res is False:
-                self.logger.exception("_cancel_orders, msg {}".format(err))
-                raise Exception("_cancel_orders, msg {}".format(err))
+                self.logger.exception(f'_cancel_orders method failed, msg {err}')
+                raise Exception(f'_cancel_orders method failed, msg {err}')
             return
 
     async def process_active_orders_on_start(self, orders_msg):
@@ -151,7 +144,7 @@ class MarketMaker(strategy_interface):
 
     async def on_market_update(self, update):
         if self.active is False:
-            self.logger.info("Strategy is not active, update will be ignored")
+            self.logger.info('Strategy is not active, update will be ignored')
             return
         elif isinstance(update, tob):
             if self.tob is None:
@@ -165,18 +158,17 @@ class MarketMaker(strategy_interface):
             await self.process_active_orders_on_start(update)
             return
         elif isinstance(update, (amend_rejection, new_order_rejection)):
-            self.logger.info("Received order rejection {}".format(update.__dict__))
+            self.logger.info(f'Received order rejection {update.__dict__}')
 
         try:
             self.orders_manager.update_order_state(update.order_id, update)
         except Exception as err:
-            self.logger.error("update_order_state failed on {}".format(update))
-            raise Exception("on_market_update raised. update = {}, reason = {}".format(
-                type(update), str(err)))
+            self.logger.error(f'update_order_state failed on {update}')
+            raise Exception(f'on_market_update raised. update = {type(update)}, reason = {err}')
 
     async def run(self):
         if self.active is False:
-            self.logger.info("Strategy is not active, method run will be stopped")
+            self.logger.info('Strategy is not active, method run will be stopped')
             return
         elif self.tob is None:
             return
@@ -189,14 +181,15 @@ class MarketMaker(strategy_interface):
         await self.process_market_move()
 
     def tob_moved(self, tob):
-        if self.tob.best_bid_price != tob.best_bid_price or self.tob.best_ask_price != tob.best_ask_price:
+        if self.tob.best_bid_price != tob.best_bid_price or \
+                self.tob.best_ask_price != tob.best_ask_price:
             return True
         return False
 
     def _orders_are_ready_for_amend(self):
         known_statuses = self.orders_manager.get_number_of_ready_for_amend()
-        if self.last_amend_time and len(
-                self.orders_manager.live_orders_ids) > 0 and known_statuses != self.num_of_sent_orders:
+        if self.last_amend_time and len(self.orders_manager.live_orders_ids) > 0 and \
+                known_statuses != self.num_of_sent_orders:
             return known_statuses
         return True
 
@@ -243,33 +236,30 @@ class MarketMaker(strategy_interface):
 
     async def process_market_move(self):
         if self.active is False:
-            self.logger.info("Strategy is not active, process_market_move will be stopped")
+            self.logger.info('Strategy is not active, process_market_move will be stopped')
             return
         elif self.reconnecting is True:
-            self.logger.info("Ongoing reconnection, process_market_move will be stopped")
+            self.logger.info('Ongoing reconnection, process_market_move will be stopped')
             return
 
-        self.logger.info("process_market_move started")
+        self.logger.info('process_market_move started')
 
         res = self._orders_are_ready_for_amend()
         if res is not True:
 
-            self.logger.info("_orders_are_ready_for_amend returned False")
+            self.logger.info('_orders_are_ready_for_amend returned False')
 
             known_statuses = res
             if self.last_amend_time + self.MAX_NUMBER_OF_ATTEMPTS_SECS < time.time():
                 err_msg = (
-                    "Will be reconnected since only {} "
-                    "active orders were updated within {} seconds".format(
-                        known_statuses,
-                        self.MAX_NUMBER_OF_ATTEMPTS_SECS
-                    )
+                    f'Will be reconnected since only {known_statuses} '
+                    f'active orders were updated within {self.MAX_NUMBER_OF_ATTEMPTS_SECS} seconds'
                 )
 
                 res = await self.handle_exception(err_msg)
                 if res is False:
-                    self.logger.log("Error: %s", err_msg)
-                    raise Exception("handle_exception failed")
+                    self.logger.log('Error: %s', err_msg)
+                    raise Exception('handle_exception failed')
                 return
             return
 
@@ -280,8 +270,8 @@ class MarketMaker(strategy_interface):
         except Exception as err:
             res = await self.handle_exception(err)
             if res is False:
-                self.logger.exception("Exception")
-                raise GatewayError("Orders amend failed {}".format(err))
+                self.logger.exception('Exception')
+                raise Exception(f'Orders amend failed {err}')
             return
 
         self.last_amend_time = time.time()
