@@ -3,7 +3,7 @@ import asyncio
 import traceback
 
 from .strategy_interface import strategy_interface
-from orders_manager import orders_manager
+from orders_manager import OrdersManager
 
 from logger import logging
 
@@ -15,14 +15,14 @@ from definitions import (
     exchange_orders,
     new_order_ack,
     amend_ack,
-    new_order_nack,
-    amend_nack,
+    new_order_rejection,
+    amend_rejection,
     order_fill_ack,
     order_full_fill_ack,
 )
 
 
-class market_maker(strategy_interface):
+class MarketMaker(strategy_interface):
     TIME_TO_WAIT_SINCE_START_SECS = 10
     MAX_NUMBER_OF_ATTEMPTS_SECS = 5
 
@@ -34,7 +34,7 @@ class market_maker(strategy_interface):
         self.config = cfg
         self.exchange_adapter = exchange_adapter
         self.exchange_adapter.set_order_update_callback(self.on_market_update)
-        self.orders_manager = orders_manager(self.exchange_adapter)
+        self.orders_manager = OrdersManager(self.exchange_adapter)
 
         if self.cancel_orders_on_start is True:
             self.exchange_adapter.cancel_orders_on_start = True
@@ -164,11 +164,11 @@ class market_maker(strategy_interface):
         elif isinstance(update, exchange_orders):
             await self.process_active_orders_on_start(update)
             return
-        elif isinstance(update, (amend_nack, new_order_nack)):
-            self.logger.info("Received order nack {}".format(update.__dict__))
+        elif isinstance(update, (amend_rejection, new_order_rejection)):
+            self.logger.info("Received order rejection {}".format(update.__dict__))
 
         try:
-            self.orders_manager.update_order_state(update.orderid, update)
+            self.orders_manager.update_order_state(update.order_id, update)
         except Exception as err:
             self.logger.error("update_order_state failed on {}".format(update))
             raise Exception("on_market_update raised. update = {}, reason = {}".format(

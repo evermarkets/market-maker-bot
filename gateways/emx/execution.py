@@ -1,14 +1,17 @@
 import time
 import json
 import aiohttp
-import datetime
 
 from definitions import api_result, order_type, order_side, exchange_orders, exchange_order
 
 from logger import logging
 
 
-class execution_adapter():
+def get_timestamp():
+    return int(round(time.time()))
+
+
+class ExecutionAdapter:
     ROUNDING_QTY = 4
 
     def __init__(self, config, auth, ws, shared_storage):
@@ -23,23 +26,20 @@ class execution_adapter():
             'content-type': 'application/json'
         }
 
-    def _get_timestamp(self):
-        return int(round(time.time()))
-
     async def request_orders(self):
         body = {}
-        endpoint = "/v1/orders?contract_code={}".format(self.config.symbol)
+        endpoint = f'/v1/orders?contract_code={self.config.symbol}'
         url = self.config.url + endpoint
 
-        timestamp = self._get_timestamp()
-        signature = self.auth.generate_signature(timestamp, "GET", endpoint, body)
+        timestamp = get_timestamp()
+        signature = self.auth.generate_signature(timestamp, 'GET', endpoint, body)
 
         self.headers['EMX-ACCESS-KEY'] = self.auth.api_key
         self.headers['EMX-ACCESS-SIG'] = signature.decode().strip()
         self.headers['EMX-ACCESS-TIMESTAMP'] = str(timestamp)
 
         self.logger.info(
-            "{} Requesting orders, Info = {}, Data: {}".format(self.config.exchange_name, self.headers, body))
+            f'{self.config.exchange_name} Requesting orders, Info = {self.headers}, Data: {body}')
 
         try:
             resp = await self.ws.session.get(url, json=body, headers=self.headers)
@@ -47,17 +47,19 @@ class execution_adapter():
             raise Exception(str(err))
         msg = await resp.text()
 
-        self.logger.info("{} Orders received: {}".format(self.config.exchange_name, msg))
+        self.logger.info(f'{self.config.exchange_name} Orders received: {msg}')
 
         if resp.status != 200:
-            raise Exception("Failed to request positions. Reason: {}".format(msg))
+            raise Exception(f'Failed to request positions. Reason: {msg}')
 
         try:
             msg_json = json.loads(msg)
-        except Exception as e:
+        except Exception as err:
             self.logger.exception(
-                "{} Exception raised during json parsing: {}. Msg: {}".format(self.config.exchange_name, str(e), msg))
-            raise Exception("{} Failed to parse the response {}".format(self.config.exchange_name, msg))
+                f'{self.config.exchange_name} Exception raised '
+                f'during json parsing: {err}. Msg: {msg}')
+            raise Exception(
+                f'{self.config.exchange_name} Failed to parse the response {msg}')
 
         res = exchange_orders()
 
@@ -75,7 +77,7 @@ class execution_adapter():
             elif order_dict['type'] == 'market':
                 order.type = order_type.limit
 
-            order.exchange_orderid = order_dict['order_id']
+            order.exchange_order_id = order_dict['order_id']
 
             if order_dict['side'] == 'buy':
                 order.side = order_side.buy
@@ -90,42 +92,42 @@ class execution_adapter():
 
         data = []
         for order in orders:
-            side = ""
+            side = ''
             if order.side == order_side.buy:
-                side = "buy"
+                side = 'buy'
             elif order.side == order_side.sell:
-                side = "sell"
+                side = 'sell'
             else:
-                raise Exception("Unknown order side. Type = {}".format(order.side))
+                raise Exception(f'Unknown order side. Type = {order.side}')
 
-            ord_type = ""
+            ord_type = ''
             if order.type == order_type.mkt:
-                ord_type = "market"
+                ord_type = 'market'
             elif order.type == order_type.limit:
-                ord_type = "limit"
+                ord_type = 'limit'
             else:
-                raise Exception("Unknown order type. Type = {}".format(order.type))
+                raise Exception(f'Unknown order type. Type = {order.type}')
 
             body = {
-                "client_id": order.orderid,
-                "contract_code": self.config.symbol,
-                "type": ord_type,
-                "side": side,
-                "size": str(round(order.quantity, self.ROUNDING_QTY))
+                'client_id': order.order_id,
+                'contract_code': self.config.symbol,
+                'type': ord_type,
+                'side': side,
+                'size': str(round(order.quantity, self.ROUNDING_QTY))
             }
             if order.type == order_type.limit:
-                body["price"] = str(order.price)
+                body['price'] = str(order.price)
             data.append(body)
-            self.shared_storage.orders[order.orderid] = order
+            self.shared_storage.orders[order.order_id] = order
 
         final_data = {
-            "channel": "trading",
-            "type": "request",
-            "action": "create-order",
-            "data": data
+            'channel': 'trading',
+            'type': 'request',
+            'action': 'create-order',
+            'data': data
         }
 
-        self.logger.info("EMX sending new order request. Data: {}".format(final_data))
+        self.logger.info(f'EMX sending new order request. Data: {final_data}')
         try:
             await self.ws.ws.send_str(json.dumps(final_data))
         except aiohttp.client_exceptions.ClientConnectorError as err:
@@ -138,58 +140,58 @@ class execution_adapter():
         res = api_result()
 
         try:
-            eid = self.shared_storage.uid_to_eid[old_order.orderid]
+            eid = self.shared_storage.uid_to_eid[old_order.order_id]
         except KeyError:
-            self.logger.warning("Order id was not found for amend. Order id = {}".format(old_order.orderid))
+            self.logger.warning(
+                f'Order id was not found for amend. Order id = {old_order.order_id}')
             return res
 
-        ord_type = ""
+        ord_type = ''
         if new_order.type == order_type.mkt:
-            ord_type = "market"
+            ord_type = 'market'
         elif new_order.type == order_type.limit:
-            ord_type = "limit"
+            ord_type = 'limit'
         else:
-            raise Exception("Unknown order type. Type = {}".format(new_order.type))
+            raise Exception(f'Unknown order type. Type = {new_order.type}')
 
         if new_order.side != old_order.side:
-            raise Exception("Wrong order side. Side = {}".format(new_order.side))
+            raise Exception(f'Wrong order side. Side = {new_order.side}')
 
-        side = ""
+        side = ''
         if new_order.side == order_side.buy:
-            side = "buy"
+            side = 'buy'
         elif new_order.side == order_side.sell:
-            side = "sell"
+            side = 'sell'
         else:
-            raise Exception("Unknown order side. Type = {}".format(new_order.side))
+            raise Exception(f'Unknown order side. Type = {new_order.side}')
 
         body = {
-            "type": ord_type,
-            "side": side,
-            "order_id": eid,
-            "size": str(round(new_order.quantity, self.ROUNDING_QTY))
+            'type': ord_type,
+            'side': side,
+            'order_id': eid,
+            'size': str(round(new_order.quantity, self.ROUNDING_QTY))
         }
         if new_order.type == order_type.limit:
-            body["price"] = str(new_order.price)
+            body['price'] = str(new_order.price)
 
         final_data = {
-            "channel": "trading",
-            "type": "request",
-            "action": "modify-order",
-            "data": body
+            'channel': 'trading',
+            'type': 'request',
+            'action': 'modify-order',
+            'data': body
         }
 
-        self.logger.info("Sending amend request. New orderId = {}, old orderid = {}, Data: {}".format(
-            new_order.orderid,
-            old_order.orderid,
-            final_data))
+        self.logger.info(
+            f'Sending amend request. New orderId = {new_order.order_id},'
+            f' old order_id = {old_order.order_id}, Data: {final_data}')
 
-        self.shared_storage.eid_to_uid[eid] = new_order.orderid
-        self.shared_storage.uid_to_eid[new_order.orderid] = eid
-        self.shared_storage.eid_to_uid_amend[eid] = old_order.orderid
+        self.shared_storage.eid_to_uid[eid] = new_order.order_id
+        self.shared_storage.uid_to_eid[new_order.order_id] = eid
+        self.shared_storage.eid_to_uid_amend[eid] = old_order.order_id
         self.shared_storage.eids_to_amend[eid] = True
-        self.shared_storage.orders[new_order.orderid] = new_order
+        self.shared_storage.orders[new_order.order_id] = new_order
 
-        self.logger.debug("Ids mapped during amend, eid = {}, uid = {}".format(eid, new_order.orderid))
+        self.logger.debug(f'Ids mapped during amend, eid = {eid}, uid = {new_order.order_id}')
         try:
             await self.ws.ws.send_str(json.dumps(final_data))
         except aiohttp.client_exceptions.ClientConnectorError as err:
@@ -204,55 +206,56 @@ class execution_adapter():
         data = []
         for new_order, old_order in zip(new_orders, old_orders):
             try:
-                eid = self.shared_storage.uid_to_eid[old_order.orderid]
+                eid = self.shared_storage.uid_to_eid[old_order.order_id]
             except KeyError:
-                self.logger.warning("Order id was not found for amend. Order id = {}".format(old_order.orderid))
+                self.logger.warning(
+                    f'Order id was not found for amend. Order id = {old_order.order_id}')
                 return res
 
-            ord_type = ""
+            ord_type = ''
             if new_order.type == order_type.mkt:
-                ord_type = "market"
+                ord_type = 'market'
             elif new_order.type == order_type.limit:
-                ord_type = "limit"
+                ord_type = 'limit'
             else:
-                raise Exception("Unknown order type. Type = {}".format(new_order.type))
+                raise Exception(f'Unknown order type. Type = {new_order.type}')
 
             if new_order.side != old_order.side:
-                raise Exception("Wrong order side. Side = {}".format(new_order.side))
+                raise Exception(f'Wrong order side. Side = {new_order.side}')
 
-            side = ""
+            side = ''
             if new_order.side == order_side.buy:
-                side = "buy"
+                side = 'buy'
             elif new_order.side == order_side.sell:
-                side = "sell"
+                side = 'sell'
             else:
-                raise Exception("Unknown order side. Type = {}".format(new_order.side))
+                raise Exception(f'Unknown order side. Type = {new_order.side}')
 
             body = {
-                "type": ord_type,
-                "side": side,
-                "order_id": eid,
-                "size": str(round(new_order.quantity, self.ROUNDING_QTY))
+                'type': ord_type,
+                'side': side,
+                'order_id': eid,
+                'size': str(round(new_order.quantity, self.ROUNDING_QTY))
             }
             if new_order.type == order_type.limit:
-                body["price"] = str(new_order.price)
+                body['price'] = str(new_order.price)
             data.append(body)
 
-            self.shared_storage.eid_to_uid[eid] = new_order.orderid
-            self.shared_storage.uid_to_eid[new_order.orderid] = eid
-            self.shared_storage.eid_to_uid_amend[eid] = old_order.orderid
+            self.shared_storage.eid_to_uid[eid] = new_order.order_id
+            self.shared_storage.uid_to_eid[new_order.order_id] = eid
+            self.shared_storage.eid_to_uid_amend[eid] = old_order.order_id
             self.shared_storage.eids_to_amend[eid] = True
-            self.shared_storage.orders[new_order.orderid] = new_order
-            self.logger.debug("Ids mapped during amend, eid = {}, uid = {}".format(eid, new_order.orderid))
+            self.shared_storage.orders[new_order.order_id] = new_order
+            self.logger.debug(f'Ids mapped during amend, eid = {eid}, uid = {new_order.order_id}')
 
         final_data = {
-            "channel": "trading",
-            "type": "request",
-            "action": "modify-order",
-            "data": data
+            'channel': 'trading',
+            'type': 'request',
+            'action': 'modify-order',
+            'data': data
         }
 
-        self.logger.info("Sending bulk amend request. Data: {}".format(final_data))
+        self.logger.info(f'Sending bulk amend request. Data: {final_data}')
         try:
             await self.ws.ws.send_str(json.dumps(final_data))
         except aiohttp.client_exceptions.ClientConnectorError as err:
@@ -264,42 +267,43 @@ class execution_adapter():
     async def send_order(self, order):
         res = api_result()
 
-        side = ""
+        side = ''
         if order.side == order_side.buy:
-            side = "buy"
+            side = 'buy'
         elif order.side == order_side.sell:
-            side = "sell"
+            side = 'sell'
         else:
-            raise Exception("Unknown order side. Type = {}".format(order.side))
+            raise Exception(f'Unknown order side. Type = {order.side}')
 
-        ord_type = ""
+        ord_type = ''
         if order.type == order_type.mkt:
-            ord_type = "market"
+            ord_type = 'market'
         elif order.type == order_type.limit:
-            ord_type = "limit"
+            ord_type = 'limit'
         else:
-            raise Exception("Unknown order type. Type = {}".format(order.type))
+            raise Exception(f'Unknown order type. Type = {order.type}')
 
         body = {
-            "client_id": order.orderid,
-            "contract_code": self.config.symbol if self.config.symbol else order.instrument_name,
-            "type": ord_type,
-            "side": side,
-            "size": str(round(order.quantity, self.ROUNDING_QTY))
+            'client_id': order.order_id,
+            'contract_code': self.config.symbol if self.config.symbol else order.instrument_name,
+            'type': ord_type,
+            'side': side,
+            'size': str(round(order.quantity, self.ROUNDING_QTY))
         }
         if order.type == order_type.limit:
-            body["price"] = str(order.price)
+            body['price'] = str(order.price)
 
         final_data = {
-            "channel": "trading",
-            "type": "request",
-            "action": "create-order",
-            "data": body
+            'channel': 'trading',
+            'type': 'request',
+            'action': 'create-order',
+            'data': body
         }
 
-        self.shared_storage.orders[order.orderid] = order
+        self.shared_storage.orders[order.order_id] = order
 
-        self.logger.info("EMX sending new order request. OrderId = {}, Data: {}".format(order.orderid, final_data))
+        self.logger.info(
+            f'EMX sending new order request. OrderId = {order.order_id}, Data: {final_data}')
         try:
             await self.ws.ws.send_str(json.dumps(final_data))
         except aiohttp.client_exceptions.ClientConnectorError as err:
@@ -308,32 +312,32 @@ class execution_adapter():
         res.success = True
         return res
 
-    async def cancel_order(self, orderid):
+    async def cancel_order(self, order_id):
         res = api_result()
         try:
-            eid = self.shared_storage.uid_to_eid[orderid]
+            eid = self.shared_storage.uid_to_eid[order_id]
         except KeyError:
             # Order elimination msg was received on the Streaming side
-            self.logger.warning("Order was already removed. Order id = {}".format(orderid))
+            self.logger.warning(f'Order was already removed. Order id = {order_id}')
             res.success = True
             return res
 
         body = {
-            "order_id": eid
+            'order_id': eid
         }
 
         final_data = {
-            "channel": "trading",
-            "type": "request",
-            "action": "cancel-order",
-            "data": body
+            'channel': 'trading',
+            'type': 'request',
+            'action': 'cancel-order',
+            'data': body
         }
 
-        self.logger.info("Sending cancellation request. eid = {}, data: {}".format(eid, final_data))
+        self.logger.info(f'Sending cancellation request. eid = {eid}, data: {final_data}')
         try:
             await self.ws.ws.send_str(json.dumps(final_data))
         except aiohttp.client_exceptions.ClientConnectorError as err:
-            self.logger.warning("ConnectionError will be raised")
+            self.logger.warning('ConnectionError will be raised')
             raise ConnectionError(str(err))
 
         res.success = True
@@ -343,17 +347,17 @@ class execution_adapter():
         res = api_result()
 
         body = {
-            "contract_code": self.config.symbol
+            'contract_code': self.config.symbol
         }
 
         final_data = {
-            "channel": "trading",
-            "type": "request",
-            "action": "cancel-all-orders",
-            "data": body
+            'channel': 'trading',
+            'type': 'request',
+            'action': 'cancel-all-orders',
+            'data': body
         }
 
-        self.logger.info("Sending cancel all request")
+        self.logger.info('Sending cancel all request')
         try:
             await self.ws.ws.send_str(json.dumps(final_data))
         except aiohttp.client_exceptions.ClientConnectorError as err:
@@ -362,5 +366,5 @@ class execution_adapter():
         res.success = True
         return res
 
-    async def cancel_orders(self, ordersids):
-        raise Exception("Multiple orders cancellation is not supported")
+    async def cancel_orders(self, orders_ids):
+        raise Exception('Multiple orders cancellation is not supported')

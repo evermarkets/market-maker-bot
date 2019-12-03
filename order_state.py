@@ -5,16 +5,16 @@ from enum import Enum, auto
 class event(Enum):
     on_creation = auto()
     on_insert_ack = auto()
-    on_insert_nack = auto()
+    on_insert_rejection = auto()
     on_cancel = auto()
     on_fill = auto()
     on_full_fill = auto()
     on_cancel_ack = auto()
-    on_cancel_nack = auto()
+    on_cancel_rejection = auto()
     on_amend = auto()
     on_amend_ack = auto()
     on_amend_partial_ack = auto()
-    on_amend_nack = auto()
+    on_amend_rejection = auto()
 
 
 class state:
@@ -39,7 +39,7 @@ class inactive(state):
 
 class insert_pending(state):
     def on_event(self, event):
-        if event == event.on_insert_nack:
+        if event == event.on_insert_rejection:
             return insert_failed()
         elif event == event.on_cancel:
             return cancel_pending()
@@ -58,7 +58,7 @@ class active(state):
     def on_event(self, event):
         if event == event.on_fill:
             return fill()
-        elif event == event.on_insert_nack:
+        elif event == event.on_insert_rejection:
             return insert_failed()
         elif event == event.on_cancel:
             return cancel_pending()
@@ -68,7 +68,7 @@ class active(state):
             return fill()
         elif event == event.on_full_fill:
             return full_fill()
-        elif event == event.on_amend_nack:
+        elif event == event.on_amend_rejection:
             return inactive()
         return self
 
@@ -81,7 +81,7 @@ class amend_pending(state):
             return active()
         elif event == event.on_amend_partial_ack:
             return active()
-        elif event == event.on_amend_nack:
+        elif event == event.on_amend_rejection:
             return inactive()
         elif event == event.on_fill:
             return fill()
@@ -138,7 +138,7 @@ class cancel_pending(state):
             return fill()
         elif event == event.on_cancel_ack:
             return cancelled()
-        elif event == event.on_cancel_nack:
+        elif event == event.on_cancel_rejection:
             return cancel_failed()
         return self
 

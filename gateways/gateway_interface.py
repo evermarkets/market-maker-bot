@@ -8,7 +8,7 @@ from definitions import api_result
 from logger import logging
 
 
-class gateway_interface(abc.ABC):
+class GatewayInterface(abc.ABC):
     def __init__(self):
         self.msg_callback = None
         self.stop = False

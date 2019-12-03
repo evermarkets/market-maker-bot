@@ -1,13 +1,13 @@
 import asyncio
 import traceback
 
-from strategy.market_maker import market_maker
-from gateways.emx.adapter import emx_adapter
+from strategy.market_maker import MarketMaker
+from gateways.emx.adapter import EmxAdapter
 
 from logger import logging
 
 strategies_factory = {
-    "market_maker": market_maker,
+    "market_maker": MarketMaker,
 }
 
 
@@ -16,7 +16,7 @@ class Engine:
         self.logger = logging.getLogger()
 
         self.is_active = True
-        self.exchange_adapter = emx_adapter(cfg.adapter)
+        self.exchange_adapter = EmxAdapter(cfg.adapter)
 
         try:
             strategy_name = cfg.strategy.name
@@ -56,7 +56,7 @@ class Engine:
 
         loop = asyncio.get_event_loop()
 
-        def handle_async_exception(loop, ctx):
+        def handle_async_exception(loop_, ctx):
             try:
                 self.logger.error("Exception in async task: {0}".format(ctx["exception"]))
             except KeyError:

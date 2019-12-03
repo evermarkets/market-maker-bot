@@ -28,7 +28,7 @@ class order_request:
         self.price = 0.0
         self.side = order_side.unknown
         self.type = order_type.unknown
-        self.orderid = ""
+        self.order_id = ""
         self.timestamp = datetime.datetime.now().timestamp()
 
 
@@ -40,7 +40,7 @@ class exchange_order:
         self.price = 0.0
         self.side = order_side.unknown
         self.type = order_type.unknown
-        self.exchange_orderid = ""
+        self.exchange_order_id = ""
 
 
 class exchange_orders:
@@ -55,8 +55,8 @@ class fill:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
-        self.orderid = ""
-        self.fillid = ""
+        self.order_id = ""
+        self.fill_id = ""
         self.fill_price = 0.0
         self.qty = 0.0
         self.timestamp = ""
@@ -78,7 +78,7 @@ class tob:
 
 class new_order_ack:
     def __init__(self):
-        self.orderid = ""
+        self.order_id = ""
         self.instrument_name = ""
         self.quantity = 0.0
         self.price = 0.0
@@ -87,23 +87,23 @@ class new_order_ack:
         self.timestamp = datetime.datetime.now().timestamp()
 
 
-class new_order_nack:
+class new_order_rejection:
     def __init__(self):
-        self.orderid = ""
-        self.exchange_orderid = ""
+        self.order_id = ""
+        self.exchange_order_id = ""
         self.rejection_reason = ""
         # self.timestamp = None
 
 
 class order_elim_ack:
     def __init__(self):
-        self.orderid = ""
+        self.order_id = ""
         # self.timestamp = None
 
 
-class order_elim_nack:
+class order_elim_rejection:
     def __init__(self):
-        self.orderid = ""
+        self.order_id = ""
         self.rejection_reason = ""
         # self.timestamp = None
 
@@ -112,9 +112,9 @@ class order_fill_ack:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
-        self.orderid = ""
-        self.exchangeid = ""
-        self.fillid = ""
+        self.order_id = ""
+        self.exchange_id = ""
+        self.fill_id = ""
         self.side = ""
         self.order_type = ""
         self.order_qty = 0.0
@@ -130,9 +130,9 @@ class order_full_fill_ack:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
-        self.orderid = ""
-        self.exchangeid = ""
-        self.fillid = ""
+        self.order_id = ""
+        self.exchange_id = ""
+        self.fill_id = ""
         self.side = ""
         self.order_type = ""
         self.order_qty = 0.0
@@ -148,9 +148,9 @@ class amend_ack_on_partial:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
-        self.orderid = ""
-        self.exchangeid = ""
-        self.fillid = ""
+        self.order_id = ""
+        self.exchange_id = ""
+        self.fill_id = ""
         self.side = ""
         self.order_type = ""
         self.order_qty = 0.0
@@ -162,7 +162,7 @@ class amend_ack_on_partial:
 
 class amend_ack:
     def __init__(self):
-        self.orderid = ""
+        self.order_id = ""
         self.instrument_name = ""
         self.quantity = 0.0
         self.price = 0.0
@@ -171,7 +171,7 @@ class amend_ack:
         self.timestamp = datetime.datetime.now().timestamp()
 
 
-class amend_nack:
+class amend_rejection:
     def __init__(self):
-        self.orderid = ""
+        self.order_id = ""
         self.rejection_reason = ""
