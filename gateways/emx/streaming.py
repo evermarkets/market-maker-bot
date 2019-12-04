@@ -16,8 +16,8 @@ from definitions import (
     order_full_fill_ack,
     amend_ack,
     amend_rejection,
-    amend_ack_on_partial
-
+    amend_ack_on_partial,
+    position
 )
 
 
@@ -70,7 +70,7 @@ class StreamingAdapter:
 
         msg = {
             'type': 'subscribe',
-            'channels': ['orders', 'trading', 'ticker'],
+            'channels': ['orders', 'trading', 'ticker', 'positions'],
             'key': self.auth.api_key,
             'sig': signature.decode().strip(),
             'timestamp': timestamp

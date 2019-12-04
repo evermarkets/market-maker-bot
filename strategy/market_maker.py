@@ -14,6 +14,7 @@ from definitions import (
     exchange_orders,
     new_order_rejection,
     amend_rejection,
+    position,
 )
 
 
@@ -34,16 +35,19 @@ class MarketMaker(strategy_interface):
         self.process_orders_on_start = False
         self.exchange_adapter.cancel_orders_on_start = True
 
-        self.update_orders = False
+        self.update_orders_flag = False
 
         self.started_time = time.time()
         self.last_amend_time = None
         self.reconnecting = False
 
-        self.active = True
         self.tob = None
+        self.active = True
+        self.current_position = None
         self.num_of_sent_orders = 0
         self.cancel_all_request_was_sent = False
+        self.position_retreat_increment = self.position_retreat.position_increment
+        self.position_retreat_ticks = self.position_retreat.retreat_ticks
 
         self.user_asks = self.config.orders.asks
         self.user_bids = self.config.orders.bids
@@ -55,6 +59,7 @@ class MarketMaker(strategy_interface):
             'tick_size',
             'price_rounding',
             'stop_strategy_on_error',
+            'position_retreat'
         )
         for option_name in option_names:
             option = getattr(cfg, option_name)
@@ -62,6 +67,9 @@ class MarketMaker(strategy_interface):
                 self.logger.error(f'{option_name} was not found')
                 raise Exception(f'{option_name} was not found')
             setattr(self, option_name, option)
+
+    def should_perform_position_retreat(self):
+        return self.position_retreat_increment and self.position_retreat_ticks
 
     async def handle_exception(self, err_msg):
         self.logger.error(f'handle_exception traceback: {err_msg}')
@@ -131,7 +139,6 @@ class MarketMaker(strategy_interface):
     async def process_active_orders_on_start(self, orders_msg):
         if not self.process_orders_on_start:
             return
-
         self.orders_manager.activate_orders(orders_msg)
 
     async def on_market_update(self, update):
@@ -140,14 +147,17 @@ class MarketMaker(strategy_interface):
             return
         elif isinstance(update, tob):
             if self.tob is None:
-                self.update_orders = True
+                self.update_orders_flag = True
                 self.tob = update
             elif self.tob_moved(update):
-                self.update_orders = True
+                self.update_orders_flag = True
                 self.tob = update
             return
         elif isinstance(update, exchange_orders):
             await self.process_active_orders_on_start(update)
+            return
+        elif isinstance(update, position):
+            self.current_position = update.position
             return
         elif isinstance(update, (amend_rejection, new_order_rejection)):
             self.logger.info(f'Received order rejection {update.__dict__}')
@@ -164,13 +174,13 @@ class MarketMaker(strategy_interface):
             return
         elif self.tob is None:
             return
-        elif self.update_orders is False:
+        elif self.update_orders_flag is False:
             return
         elif self.started_time + self.TIME_TO_WAIT_SINCE_START_SECS > time.time():
             return
 
-        self.update_orders = False
-        await self.process_market_move()
+        self.update_orders_flag = False
+        await self.react_to_market_move()
 
     def tob_moved(self, tob):
         if self.tob.best_bid_price != tob.best_bid_price or \
@@ -226,15 +236,37 @@ class MarketMaker(strategy_interface):
             orders.append(order)
         return orders
 
-    async def process_market_move(self):
+    def perform_retreats(self, orders):
+        bids_ = [order for order in orders if order.side == order_side.buy]
+        asks_ = [order for order in orders if order.side == order_side.sell]
+
+        if self.current_position is None:
+            return None
+
+        retreat_in_ticks = int(self.current_position / self.position_retreat.position_increment) * \
+                           self.position_retreat.retreat_ticks
+        if retreat_in_ticks == 0:
+            return orders
+
+        if retreat_in_ticks > 0.0:
+            for order in bids_:
+                order.price = round(order.price - self.tick_size * retreat_in_ticks,
+                                    self.price_rounding)
+        else:
+            for order in asks_:
+                order.price = round(order.price - self.tick_size * retreat_in_ticks,
+                                    self.price_rounding)
+        return bids_ + asks_
+
+    async def react_to_market_move(self):
         if self.active is False:
-            self.logger.info('Strategy is not active, process_market_move will be stopped')
+            self.logger.info('Strategy is not active, react_to_market_move will be stopped')
             return
         elif self.reconnecting is True:
-            self.logger.info('Ongoing reconnection, process_market_move will be stopped')
+            self.logger.info('Ongoing reconnection, react_to_market_move will be stopped')
             return
 
-        self.logger.info('process_market_move started')
+        self.logger.info('react_to_market_move started')
 
         res = self._orders_are_ready_for_amend()
         if res is not True:
@@ -256,6 +288,11 @@ class MarketMaker(strategy_interface):
             return
 
         orders = self.generate_orders()
+        if self.should_perform_position_retreat():
+            orders = self.perform_retreats(orders)
+            if not orders:
+                self.logger.warning("Failed to perform retreat adjustment")
+                return
 
         try:
             await self.orders_manager.amend_active_orders(orders)

@@ -175,3 +175,9 @@ class amend_rejection:
     def __init__(self):
         self.order_id = ""
         self.rejection_reason = ""
+
+class position:
+    def __init__(self):
+        self.exchange = ""
+        self.instrument = ""
+        self.position = None
