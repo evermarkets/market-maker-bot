@@ -132,12 +132,6 @@ class MarketMaker(strategy_interface):
         if not self.process_orders_on_start:
             return
 
-        if len(orders_msg.bids + orders_msg.asks) == 0:
-            return
-        elif len(orders_msg.bids + orders_msg.asks) % 2 != 0:
-            await self._cancel_orders()
-            return
-
         self.orders_manager.activate_orders(orders_msg)
 
     async def on_market_update(self, update):
