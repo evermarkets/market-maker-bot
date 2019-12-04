@@ -10,14 +10,20 @@ strategy:
     tick_size: 0.000001
     price_rounding: 6
 
+    position_retreat:
+        position_increment: 100
+        retreat_ticks: 5
+
     orders:
         asks: [
-                [10, 0.01],
-                [12, 0.1]
+                [1, 0.01],
+                [2, 0.02],
+                [5, 0.03],
               ]
         bids: [
-                [10, 0.01],
-                [11, 0.01]
+                [1, 0.01],
+                [2, 0.02],
+                [5, 0.03],
               ]
 
     stop_strategy_on_error: False
