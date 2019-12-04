@@ -31,6 +31,7 @@ class MarketMaker(strategy_interface):
         self.exchange_adapter.set_order_update_callback(self.on_market_update)
         self.orders_manager = OrdersManager(self.exchange_adapter)
 
+        self.process_orders_on_start = False
         self.exchange_adapter.cancel_orders_on_start = True
 
         self.update_orders = False
@@ -128,6 +129,9 @@ class MarketMaker(strategy_interface):
             return
 
     async def process_active_orders_on_start(self, orders_msg):
+        if not self.process_orders_on_start:
+            return
+
         if len(orders_msg.bids + orders_msg.asks) == 0:
             return
         elif len(orders_msg.bids + orders_msg.asks) % 2 != 0:
