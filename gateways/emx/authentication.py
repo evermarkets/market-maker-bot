@@ -14,7 +14,7 @@ class Authentication:
         self.api_key, self.api_secret = self.config.api_key, self.config.api_secret
 
     def generate_signature(self, timestamp, http_method, request_path, body):
-        if body is None or body == "" or body == {}:
+        if body is None or body == '' or body == {}:
             body = ''
         else:
             body = body_to_string(body)

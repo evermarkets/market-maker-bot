@@ -32,18 +32,17 @@ def get_config():
 def start_engine():
     cfg = get_config()
     if cfg is None:
-        raise Exception("Unable to connect to config")
+        raise Exception('Unable to connect to config')
 
     try:
         logger_name = cfg.logger.name
     except Exception:
-        logger_name = None
-        logger_name = "mm_bot"
+        logger_name = 'mm_bot'
 
     logger = setup_logging(cfg, logger_name)
-    logger.info("Configurations: %s", json.dumps(cfg))
+    logger.info('Configurations: %s', json.dumps(cfg))
     run(cfg)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     start_engine()

@@ -7,7 +7,7 @@ from gateways.emx.adapter import EmxAdapter
 from logger import logging
 
 strategies_factory = {
-    "market_maker": MarketMaker,
+    'market_maker': MarketMaker,
 }
 
 
@@ -21,23 +21,23 @@ class Engine:
         try:
             strategy_name = cfg.strategy.name
         except AttributeError:
-            self.logger.exception("strategy was not found")
-            raise Exception("strategy was not found")
+            self.logger.exception('strategy was not found')
+            raise Exception('strategy was not found')
 
         try:
             self.strategy = strategies_factory[strategy_name](cfg.strategy, self.exchange_adapter)
         except KeyError:
-            self.logger.exception("strategy was not found in a factory")
-            raise Exception("strategy was not found in a factory")
+            self.logger.exception('strategy was not found in a factory')
+            raise Exception('strategy was not found in a factory')
 
     async def listen_updates(self):
         while self.is_active:
             try:
                 await self.exchange_adapter.listen()
             except Exception as err:
-                self.logger.info("listen error: {}".format(err))
+                self.logger.info('listen error: {}'.format(err))
                 await self.strategy.handle_exception(str(err))
-        self.logger.warning("listen_updates was stopped")
+        self.logger.warning('listen_updates was stopped')
 
     async def run_strategy(self):
         while self.is_active:
@@ -47,23 +47,23 @@ class Engine:
                 try:
                     await self.strategy.handle_exception(str(err))
                 except Exception as err:
-                    self.logger.warning("run_strategy handle_exception failed on {}".format(err))
+                    self.logger.warning('run_strategy handle_exception failed on {}'.format(err))
             await asyncio.sleep(0.1)
-        self.logger.warning("run_strategy was stopped")
+        self.logger.warning('run_strategy was stopped')
 
     def run(self):
-        self.logger.info("Engine started")
+        self.logger.info('Engine started')
 
         loop = asyncio.get_event_loop()
 
         def handle_async_exception(loop_, ctx):
             try:
-                self.logger.error("Exception in async task: {0}".format(ctx["exception"]))
+                self.logger.error('Exception in async task: {0}'.format(ctx['exception']))
             except KeyError:
-                self.logger.error("Exception in async task: {0}".format(ctx))
+                self.logger.error('Exception in async task: {0}'.format(ctx))
 
             stack_str = traceback.format_exc()
-            self.logger.error("Current traceback: {}".format(stack_str))
+            self.logger.error('Current traceback: {}'.format(stack_str))
             for line in traceback.format_stack():
                 self.logger.error(line.strip())
 
@@ -77,7 +77,7 @@ class Engine:
         loop.slow_callback_duration = 0.05
         loop.run_forever()
         loop.close()
-        self.logger.info("Engine stopped")
+        self.logger.info('Engine stopped')
 
     def stop(self):
         self.subscriptions.stop()

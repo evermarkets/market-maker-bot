@@ -24,6 +24,6 @@ def setup_logging(cfg, app_name):
     app_logger = logging.getLogger(app_name)
     app_logger.setLevel(cfg.logger.level)
     setLogger(app_logger)
-    logging.getLogger("asyncio").setLevel(logging.INFO)
+    logging.getLogger('asyncio').setLevel(logging.INFO)
     return app_logger
 
