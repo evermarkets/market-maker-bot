@@ -124,6 +124,7 @@ class MarketMaker(StrategyInterface):
         self.cancel_all_request_was_sent = True
         self.last_amend_time = None
         self.num_of_sent_orders = 0
+        self.orders_manager.reset()
         await self.exchange_adapter.reconnect()
 
     async def _cancel_orders(self):

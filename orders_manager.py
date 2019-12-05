@@ -57,8 +57,6 @@ class OrdersManager:
         self.live_orders_ids = []
         self.orders_states = {}
         self.order_id_to_order_id_map = {}
-        self.order_to_event = {}
-        self.order_to_strategy_type = {}
         self.ids_to_fills = {}
 
         self.update_type_to_state = {
@@ -77,10 +75,11 @@ class OrdersManager:
 
     def reset(self):
         self.logger.info(f'{self.exchange_name} orders manager will be reset')
-
         self.orders = {}
         self.live_orders_ids = []
         self.orders_states = {}
+        self.order_id_to_order_id_map = {}
+        self.ids_to_fills = {}
 
     async def place_order(self, order):
         if not order.order_id:
