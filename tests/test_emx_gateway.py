@@ -7,12 +7,12 @@ from gateways.emx import streaming, execution
 from gateways.emx.shared_storage import SharedStorage
 
 from definitions import (
-    new_order_ack,
-    new_order_rejection,
-    order_elim_ack,
-    order_elim_rejection,
-    order_fill_ack,
-    order_full_fill_ack,
+    NewOrderAcknowledgement,
+    NewOrderRejection,
+    OrderEliminationAcknowledgement,
+    OrderEliminationRejection,
+    OrderFillAcknowledgement,
+    OrderFullFillAcknowledgement,
 )
 
 
@@ -78,7 +78,7 @@ async def test_streaming_fill(cfg_fixture):
     adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
     clb = Callback()
-    clb.type_to_check = order_fill_ack
+    clb.type_to_check = OrderFillAcknowledgement
 
     await adapter.process(sub_msg, clb.msg_callback)
     await adapter.process(order_msg, clb.msg_callback)
@@ -122,7 +122,7 @@ async def test_streaming_multiple_fills(cfg_fixture):
     adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
     clb = Callback()
-    clb.type_to_check = order_fill_ack
+    clb.type_to_check = OrderFillAcknowledgement
 
     await adapter.process(sub_msg, clb.msg_callback)
     await adapter.process(order_msg, clb.msg_callback)
@@ -194,7 +194,7 @@ async def test_streaming_full_fill(cfg_fixture):
     adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
     clb = Callback()
-    clb.type_to_check = order_full_fill_ack
+    clb.type_to_check = OrderFullFillAcknowledgement
 
     await adapter.process(sub_msg, clb.msg_callback)
     await adapter.process(order_msg, clb.msg_callback)

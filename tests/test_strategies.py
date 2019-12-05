@@ -7,13 +7,13 @@ from strategy.market_maker import MarketMaker
 from gateways import gateway_interface
 
 from definitions import (
-    tob,
-    new_order_ack,
-    new_order_rejection,
-    order_elim_ack,
-    order_elim_rejection,
-    order_fill_ack,
-    order_full_fill_ack,
+    TopOfBook,
+    NewOrderAcknowledgement,
+    NewOrderRejection,
+    OrderEliminationAcknowledgement,
+    OrderEliminationRejection,
+    OrderFillAcknowledgement,
+    OrderFullFillAcknowledgement,
 )
 
 
@@ -143,7 +143,7 @@ async def test_maker_rounding_tob_based(cfg_strategy_fixture):
     except Exception:
         assert False
 
-    _tob = tob()
+    _tob = TopOfBook()
     _tob.exchange = "test_exchange"
     _tob.product = "test-perp"
     _tob.best_bid_price = 99.0
@@ -169,7 +169,7 @@ async def test_maker_rounding_mid_based_1(cfg_strategy_fixture):
     except Exception:
         assert False
 
-    _tob = tob()
+    _tob = TopOfBook()
     _tob.exchange = "test_exchange"
     _tob.product = "test-perp"
     _tob.best_bid_price = 100.5
@@ -195,7 +195,7 @@ async def test_maker_rounding_mid_based_2(cfg_strategy_fixture):
     except Exception:
         assert False
 
-    _tob = tob()
+    _tob = TopOfBook()
     _tob.exchange = "test_exchange"
     _tob.product = "test-perp"
     _tob.best_bid_price = 99.0
@@ -221,7 +221,7 @@ async def test_maker_rounding_mid_based_3(cfg_strategy_fixture):
     except Exception:
         assert False
 
-    _tob = tob()
+    _tob = TopOfBook()
     _tob.exchange = "test_exchange"
     _tob.product = "test-perp"
     _tob.best_bid_price = 95.0
@@ -245,7 +245,7 @@ async def test_maker_positional_retreat(cfg_strategy_fixture):
     except Exception:
         assert False
 
-    _tob = tob()
+    _tob = TopOfBook()
     _tob.exchange = "test_exchange"
     _tob.product = "test-perp"
     _tob.best_bid_price = 99.0

@@ -4,7 +4,7 @@ import json
 import aiohttp
 import asyncio
 
-from definitions import api_result
+from definitions import ApiResult
 from logger import logging
 
 
@@ -25,27 +25,27 @@ class GatewayInterface(abc.ABC):
     async def set_order_update_callback(self, msg_callback):
         pass
 
-    async def request_orders(self) -> api_result:
+    async def request_orders(self) -> ApiResult:
         pass
 
     @abc.abstractmethod
-    async def send_order(self, order) -> api_result:
+    async def send_order(self, order) -> ApiResult:
         pass
 
     @abc.abstractmethod
-    async def send_orders(self, orders) -> api_result:
+    async def send_orders(self, orders) -> ApiResult:
         pass
 
     @abc.abstractmethod
-    async def cancel_order(self, order) -> api_result:
+    async def cancel_order(self, order) -> ApiResult:
         pass
 
     @abc.abstractmethod
-    async def cancel_orders(self, orders) -> api_result:
+    async def cancel_orders(self, orders) -> ApiResult:
         pass
 
     @abc.abstractmethod
-    async def cancel_active_orders(self) -> api_result:
+    async def cancel_active_orders(self) -> ApiResult:
         pass
 
     @abc.abstractmethod

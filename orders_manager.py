@@ -15,18 +15,18 @@ from order_state import (
 )
 
 from definitions import (
-    order_side,
-    order_request,
-    exchange_orders,
-    new_order_ack,
-    new_order_rejection,
-    order_elim_ack,
-    order_elim_rejection,
-    order_fill_ack,
-    order_full_fill_ack,
-    amend_ack,
-    amend_rejection,
-    amend_ack_on_partial
+    OrderSide,
+    OrderRequest,
+    ExchangeOrders,
+    NewOrderAcknowledgement,
+    NewOrderRejection,
+    OrderEliminationAcknowledgement,
+    OrderEliminationRejection,
+    OrderFillAcknowledgement,
+    OrderFullFillAcknowledgement,
+    AmendAcknowledgement,
+    AmendRejection,
+    AmendAcknowledgementPartial
 )
 
 from logger import logging
@@ -62,15 +62,15 @@ class OrdersManager:
         self.ids_to_fills = {}
 
         self.update_type_to_state = {
-            new_order_ack: event.on_insert_ack,
-            new_order_rejection: event.on_insert_rejection,
-            order_elim_ack: event.on_cancel_ack,
-            order_elim_rejection: event.on_cancel_rejection,
-            order_fill_ack: event.on_fill,
-            order_full_fill_ack: event.on_full_fill,
-            amend_ack: event.on_amend_ack,
-            amend_ack_on_partial: event.on_amend_partial_ack,
-            amend_rejection: event.on_amend_rejection,
+            NewOrderAcknowledgement: event.on_insert_ack,
+            NewOrderRejection: event.on_insert_rejection,
+            OrderEliminationAcknowledgement: event.on_cancel_ack,
+            OrderEliminationRejection: event.on_cancel_rejection,
+            OrderFillAcknowledgement: event.on_fill,
+            OrderFullFillAcknowledgement: event.on_full_fill,
+            AmendAcknowledgement: event.on_amend_ack,
+            AmendAcknowledgementPartial: event.on_amend_partial_ack,
+            AmendRejection: event.on_amend_rejection,
         }
 
         self.logger = logging.getLogger()
@@ -162,13 +162,13 @@ class OrdersManager:
             self.logger.error('Invalid orders for the amend; not matching sizes')
             raise Exception('Invalid orders for the amend; not matching sizes')
         for i in range(1, len(new_orders)):
-            if new_orders[i].side is order_side.buy and new_orders[i - 1].side is order_side.sell:
+            if new_orders[i].side is OrderSide.buy and new_orders[i - 1].side is OrderSide.sell:
                 raise Exception('Self crossing orders detected')
 
         try:
-            new_bid = [order.price for order in new_orders if order.side is order_side.buy][-1]
+            new_bid = [order.price for order in new_orders if order.side is OrderSide.buy][-1]
             existing_ask = \
-            [order.price for order in existing_orders if order.side is order_side.sell][0]
+            [order.price for order in existing_orders if order.side is OrderSide.sell][0]
             if new_bid > existing_ask:
                 new_orders.reverse()
                 existing_orders.reverse()
@@ -349,14 +349,14 @@ class OrdersManager:
     def activate_orders(self, orders_msg):
         self.logger.info(f'activate_orders started, orders_msg: {orders_msg}')
 
-        if isinstance(orders_msg, exchange_orders):
+        if isinstance(orders_msg, ExchangeOrders):
             exchange_orders_ = sort_orders(orders_msg.bids + orders_msg.asks)
         else:
             exchange_orders_ = orders_msg
 
         orders = []
         for exchange_order__ in exchange_orders_:
-            order = order_request()
+            order = OrderRequest()
             order.side = exchange_order__.side
             order.type = exchange_order__.type
             order.price = exchange_order__.price
@@ -379,7 +379,7 @@ class OrdersManager:
             self.update_order_state(elem.order_id, event.on_amend_ack)
 
             if exchange_elem.filled_quantity > 0.0:
-                _fill = order_fill_ack()
+                _fill = OrderFillAcknowledgement()
                 _fill.instrument = ''
                 _fill.order_id = elem.order_id
                 _fill.exchange_id = exchange_elem.exchange_order_id

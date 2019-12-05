@@ -2,48 +2,48 @@ import datetime
 from enum import Enum
 
 
-class order_side(Enum):
+class OrderSide(Enum):
     unknown = 0
     buy = 1
     sell = 2
 
 
-class order_type(Enum):
+class OrderType(Enum):
     unknown = 0
     mkt = 1
     limit = 2
     stop = 3
 
 
-class api_result:
+class ApiResult:
     def __init__(self):
         self.success = False
         self.msg = ""
 
 
-class order_request:
+class OrderRequest:
     def __init__(self):
         self.instrument_name = ""
         self.quantity = 0.0
         self.price = 0.0
-        self.side = order_side.unknown
-        self.type = order_type.unknown
+        self.side = OrderSide.unknown
+        self.type = OrderType.unknown
         self.order_id = ""
         self.timestamp = datetime.datetime.now().timestamp()
 
 
-class exchange_order:
+class ExchangeOrder:
     def __init__(self):
         self.instrument_name = ""
         self.quantity = 0.0
         self.filled_quantity = 0.0
         self.price = 0.0
-        self.side = order_side.unknown
-        self.type = order_type.unknown
+        self.side = OrderSide.unknown
+        self.type = OrderType.unknown
         self.exchange_order_id = ""
 
 
-class exchange_orders:
+class ExchangeOrders:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
@@ -51,7 +51,7 @@ class exchange_orders:
         self.asks = []  # exchange_order is expected
 
 
-class fill:
+class Fill:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
@@ -62,10 +62,10 @@ class fill:
         self.timestamp = ""
         self.fees = 0.0
         self.is_funding = False
-        self.type = order_type.unknown
+        self.type = OrderType.unknown
 
 
-class tob:
+class TopOfBook:
     def __init__(self):
         self.exchange = ""
         self.product = ""
@@ -76,18 +76,18 @@ class tob:
         self.timestamp = 0.0
 
 
-class new_order_ack:
+class NewOrderAcknowledgement:
     def __init__(self):
         self.order_id = ""
         self.instrument_name = ""
         self.quantity = 0.0
         self.price = 0.0
-        self.side = order_side.unknown
-        self.type = order_type.unknown
+        self.side = OrderSide.unknown
+        self.type = OrderType.unknown
         self.timestamp = datetime.datetime.now().timestamp()
 
 
-class new_order_rejection:
+class NewOrderRejection:
     def __init__(self):
         self.order_id = ""
         self.exchange_order_id = ""
@@ -95,20 +95,20 @@ class new_order_rejection:
         # self.timestamp = None
 
 
-class order_elim_ack:
+class OrderEliminationAcknowledgement:
     def __init__(self):
         self.order_id = ""
         # self.timestamp = None
 
 
-class order_elim_rejection:
+class OrderEliminationRejection:
     def __init__(self):
         self.order_id = ""
         self.rejection_reason = ""
         # self.timestamp = None
 
 
-class order_fill_ack:
+class OrderFillAcknowledgement:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
@@ -126,7 +126,7 @@ class order_fill_ack:
         self.fee = 0.0
 
 
-class order_full_fill_ack:
+class OrderFullFillAcknowledgement:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
@@ -144,7 +144,7 @@ class order_full_fill_ack:
         self.fee = 0.0
 
 
-class amend_ack_on_partial:
+class AmendAcknowledgementPartial:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""
@@ -160,23 +160,23 @@ class amend_ack_on_partial:
         self.fee = 0.0
 
 
-class amend_ack:
+class AmendAcknowledgement:
     def __init__(self):
         self.order_id = ""
         self.instrument_name = ""
         self.quantity = 0.0
         self.price = 0.0
-        self.side = order_side.unknown
-        self.type = order_type.unknown
+        self.side = OrderSide.unknown
+        self.type = OrderType.unknown
         self.timestamp = datetime.datetime.now().timestamp()
 
 
-class amend_rejection:
+class AmendRejection:
     def __init__(self):
         self.order_id = ""
         self.rejection_reason = ""
 
-class position:
+class Position:
     def __init__(self):
         self.exchange = ""
         self.instrument = ""

@@ -7,17 +7,17 @@ from orders_manager import OrdersManager
 from gateways import gateway_interface
 
 from definitions import (
-    api_result,
-    order_request,
-    order_type,
-    order_side,
-    exchange_orders,
-    new_order_ack,
-    new_order_rejection,
-    order_elim_ack,
-    order_elim_rejection,
-    order_fill_ack,
-    order_full_fill_ack,
+    ApiResult,
+    OrderRequest,
+    OrderType,
+    OrderSide,
+    ExchangeOrders,
+    NewOrderAcknowledgement,
+    NewOrderRejection,
+    OrderEliminationAcknowledgement,
+    OrderEliminationRejection,
+    OrderFillAcknowledgement,
+    OrderFullFillAcknowledgement,
 )
 
 
@@ -46,7 +46,7 @@ class bittest_adapter(gateway_interface.GatewayInterface):
         pass
 
     async def send_order(self, order_request):
-        res = api_result()
+        res = ApiResult()
         res.success = True
 
         self.orders_sent += 1
@@ -54,7 +54,7 @@ class bittest_adapter(gateway_interface.GatewayInterface):
         return res
 
     async def send_orders(self, orders_request):
-        res = api_result()
+        res = ApiResult()
         res.success = True
 
         self.orders_sent += len(orders_request)
@@ -63,14 +63,14 @@ class bittest_adapter(gateway_interface.GatewayInterface):
         return res
 
     async def amend_orders(self, new, old):
-        res = api_result()
+        res = ApiResult()
         res.success = True
 
         self.orders_amended += len(new)
         return res
 
     async def amend_order(self, i, j):
-        res = api_result()
+        res = ApiResult()
         res.success = True
 
         self.orders_amended += 1
@@ -78,14 +78,14 @@ class bittest_adapter(gateway_interface.GatewayInterface):
         return res
 
     async def cancel_order(self, cancel_request):
-        res = api_result()
+        res = ApiResult()
         res.success = True
 
         self.orders_cancelled += 1
         return res
 
     async def cancel_orders(self, cancel_requests):
-        res = api_result()
+        res = ApiResult()
         res.success = True
 
         self.orders_cancelled += len(cancel_requests)
@@ -113,15 +113,15 @@ async def test_place_orders_1():
 
     om = OrdersManager(adapter)
 
-    buy_order = order_request()
-    buy_order.side = order_side.buy
-    buy_order.type = order_type.limit
+    buy_order = OrderRequest()
+    buy_order.side = OrderSide.buy
+    buy_order.type = OrderType.limit
     buy_order.price = 100.0
     buy_order.quantity = 1.0
 
-    sell_order = order_request()
-    sell_order.side = order_side.sell
-    sell_order.type = order_type.limit
+    sell_order = OrderRequest()
+    sell_order.side = OrderSide.sell
+    sell_order.type = OrderType.limit
     sell_order.price = 100.0
     sell_order.quantity = 1.0
 

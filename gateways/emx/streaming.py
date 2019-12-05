@@ -3,21 +3,21 @@ import datetime
 
 from logger import logging
 from definitions import (
-    tob,
-    exchange_orders,
-    exchange_order,
-    order_type,
-    order_side,
-    new_order_ack,
-    new_order_rejection,
-    order_elim_ack,
-    order_elim_rejection,
-    order_fill_ack,
-    order_full_fill_ack,
-    amend_ack,
-    amend_rejection,
-    amend_ack_on_partial,
-    position
+    TopOfBook,
+    ExchangeOrders,
+    ExchangeOrder,
+    OrderType,
+    OrderSide,
+    NewOrderAcknowledgement,
+    NewOrderRejection,
+    OrderEliminationAcknowledgement,
+    OrderEliminationRejection,
+    OrderFillAcknowledgement,
+    OrderFullFillAcknowledgement,
+    AmendAcknowledgement,
+    AmendRejection,
+    AmendAcknowledgementPartial,
+    Position
 )
 
 
@@ -178,12 +178,12 @@ class StreamingAdapter:
         self.logger.info(f'process_active_orders started. Msg = {msg}')
         self.orders_received = True
 
-        orders_msg = exchange_orders()
+        orders_msg = ExchangeOrders()
         orders_msg.exchange = 'emx'
         orders_msg.instrument = ''
 
         for elem in msg:
-            exchange_order_ = exchange_order()
+            exchange_order_ = ExchangeOrder()
             exchange_order_.instrument_name = elem['contract_code']
             exchange_order_.quantity = float(elem['size'])
             exchange_order_.filled_quantity = float(elem['size_filled'])
@@ -192,16 +192,16 @@ class StreamingAdapter:
             if elem['order_type'] != 'market' and elem['order_type'] != 'limit':
                 raise Exception('Unable to get order type')
             if elem['order_type'] == 'market':
-                exchange_order_.type = order_type.mkt
+                exchange_order_.type = OrderType.mkt
             else:
-                exchange_order_.type = order_type.limit
+                exchange_order_.type = OrderType.limit
             exchange_order_.exchange_order_id = elem['order_id']
 
             if elem['side'] == 'sell':
-                exchange_order_.side = order_side.sell
+                exchange_order_.side = OrderSide.sell
                 orders_msg.asks.append(exchange_order_)
             else:
-                exchange_order_.side = order_side.buy
+                exchange_order_.side = OrderSide.buy
                 orders_msg.bids.append(exchange_order_)
 
         return orders_msg
@@ -222,7 +222,7 @@ class StreamingAdapter:
             self.logger.info(f'Were not able to parse position update {msg}')
             return None
 
-        pos = position()
+        pos = Position()
         pos.exchange = self.config.exchange_name
         pos.instrument_name = self.symbol
         pos.position = float(_pos)
@@ -230,7 +230,7 @@ class StreamingAdapter:
 
     def process_tick(self, msg):
         data = msg['data']
-        tb = tob()
+        tb = TopOfBook()
         tb.exchange = 'emx'
         tb.product = data['contract_code']
         tb.best_bid_price = float(data['quote']['bid'])
@@ -284,7 +284,7 @@ class StreamingAdapter:
             if float(msg['size_filled']) > 0:
                 self.logger.info(f'amend_ack_on_partial will be created. Msg = {eid}')
 
-                ack = amend_ack_on_partial()
+                ack = AmendAcknowledgementPartial()
                 ack.exchange = 'emx'
                 ack.instrument = msg['contract_code']
                 ack.order_id = uid
@@ -300,28 +300,28 @@ class StreamingAdapter:
                 ack.fee = float(msg['fill_fees'])
                 return ack
 
-            ack = amend_ack()
+            ack = AmendAcknowledgement()
             del self.shared_storage.eids_to_amend[eid]
         else:
-            ack = new_order_ack()
+            ack = NewOrderAcknowledgement()
 
         if msg['side'] == 'buy':
-            ack.side = order_side.buy
+            ack.side = OrderSide.buy
         elif msg['side'] == 'sell':
-            ack.side = order_side.sell
+            ack.side = OrderSide.sell
         else:
             raise Exception('Unable to find an order side')
 
         if msg['order_type'] == 'limit':
-            ack.type = order_type.limit
+            ack.type = OrderType.limit
         elif msg['order_type'] == 'market':
-            ack.type = order_type.mkt
+            ack.type = OrderType.mkt
         else:
             raise Exception('Unable to find an order type')
 
         ack.instrument_name = msg['contract_code']
         ack.quantity = float(msg['size'])
-        if ack.type == order_type.limit:
+        if ack.type == OrderType.limit:
             ack.price = float(msg['price'])
         ack.order_id = uid
         return ack
@@ -343,7 +343,7 @@ class StreamingAdapter:
             self.logger.warning(f'Got new order rejection, but unable to find uid for {eid}')
             return
 
-        rejection = new_order_rejection()
+        rejection = NewOrderRejection()
         rejection.order_id = uid
         rejection.exchange_order_id = eid
         rejection.rejection_reason = msg.get('message')
@@ -369,7 +369,7 @@ class StreamingAdapter:
 
         del self.shared_storage.eids_to_amend[eid]
 
-        rejection = amend_rejection()
+        rejection = AmendRejection()
         rejection.order_id = uid
         rejection.rejection_reason = msg.get('message')
         return rejection
@@ -390,7 +390,7 @@ class StreamingAdapter:
             self.logger.warning(f'Got elim ack, but unable to find uid for {eid}')
             return
 
-        ack = order_elim_ack()
+        ack = OrderEliminationAcknowledgement()
         ack.order_id = uid
         return ack
 
@@ -410,7 +410,7 @@ class StreamingAdapter:
             self.logger.warning(f'Got elim reject, but unable to find uid for {msg["order_id"]}')
             return
 
-        rejection = order_elim_rejection()
+        rejection = OrderEliminationRejection()
         rejection.order_id = uid
         rejection.rejection_reason = msg.get('message')
         return rejection
@@ -443,7 +443,7 @@ class StreamingAdapter:
 
         timestamp_obj = datetime.datetime.strptime(msg['timestamp'], '%Y-%m-%dT%H:%M:%S.%fZ')
         if status == 'done':
-            ack = order_full_fill_ack()
+            ack = OrderFullFillAcknowledgement()
             ack.exchange = 'emx'
             ack.instrument = msg['contract_code']
             ack.order_id = uid
@@ -460,7 +460,7 @@ class StreamingAdapter:
             ack.timestamp = msg['timestamp']
             ack.fee = float(msg['fill_fees_delta'])
         else:
-            ack = order_fill_ack()
+            ack = OrderFillAcknowledgement()
             ack.exchange = 'emx'
             ack.instrument = msg['contract_code']
             ack.order_id = uid

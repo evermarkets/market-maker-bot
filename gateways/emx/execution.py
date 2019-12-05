@@ -2,7 +2,7 @@ import time
 import json
 import aiohttp
 
-from definitions import api_result, order_type, order_side, exchange_orders, exchange_order
+from definitions import ApiResult, OrderType, OrderSide, ExchangeOrders, ExchangeOrder
 
 from logger import logging
 
@@ -61,49 +61,49 @@ class ExecutionAdapter:
             raise Exception(
                 f'{self.config.exchange_name} Failed to parse the response {msg}')
 
-        res = exchange_orders()
+        res = ExchangeOrders()
 
         res.exchange = self.config.exchange_name
         res.instrument = self.config.symbol
 
         for order_dict in msg_json['orders']:
-            order = exchange_order()
+            order = ExchangeOrder()
 
             order.quantity = order_dict['size']
             order.price = float(order_dict['price'])
 
             if order_dict['type'] == 'limit':
-                order.type = order_type.limit
+                order.type = OrderType.limit
             elif order_dict['type'] == 'market':
-                order.type = order_type.limit
+                order.type = OrderType.limit
 
             order.exchange_order_id = order_dict['order_id']
 
             if order_dict['side'] == 'buy':
-                order.side = order_side.buy
+                order.side = OrderSide.buy
                 res.bids.append(order)
             else:
-                order.side = order_side.sell
+                order.side = OrderSide.sell
                 res.asks.append(order)
         return res
 
     async def send_orders(self, orders):
-        res = api_result()
+        res = ApiResult()
 
         data = []
         for order in orders:
             side = ''
-            if order.side == order_side.buy:
+            if order.side == OrderSide.buy:
                 side = 'buy'
-            elif order.side == order_side.sell:
+            elif order.side == OrderSide.sell:
                 side = 'sell'
             else:
                 raise Exception(f'Unknown order side. Type = {order.side}')
 
             ord_type = ''
-            if order.type == order_type.mkt:
+            if order.type == OrderType.mkt:
                 ord_type = 'market'
-            elif order.type == order_type.limit:
+            elif order.type == OrderType.limit:
                 ord_type = 'limit'
             else:
                 raise Exception(f'Unknown order type. Type = {order.type}')
@@ -115,7 +115,7 @@ class ExecutionAdapter:
                 'side': side,
                 'size': str(round(order.quantity, self.ROUNDING_QTY))
             }
-            if order.type == order_type.limit:
+            if order.type == OrderType.limit:
                 body['price'] = str(order.price)
             data.append(body)
 
@@ -136,7 +136,7 @@ class ExecutionAdapter:
         return res
 
     async def amend_order(self, new_order, old_order):
-        res = api_result()
+        res = ApiResult()
 
         try:
             eid = self.shared_storage.uid_to_eid[old_order.order_id]
@@ -146,9 +146,9 @@ class ExecutionAdapter:
             return res
 
         ord_type = ''
-        if new_order.type == order_type.mkt:
+        if new_order.type == OrderType.mkt:
             ord_type = 'market'
-        elif new_order.type == order_type.limit:
+        elif new_order.type == OrderType.limit:
             ord_type = 'limit'
         else:
             raise Exception(f'Unknown order type. Type = {new_order.type}')
@@ -157,9 +157,9 @@ class ExecutionAdapter:
             raise Exception(f'Wrong order side. Side = {new_order.side}')
 
         side = ''
-        if new_order.side == order_side.buy:
+        if new_order.side == OrderSide.buy:
             side = 'buy'
-        elif new_order.side == order_side.sell:
+        elif new_order.side == OrderSide.sell:
             side = 'sell'
         else:
             raise Exception(f'Unknown order side. Type = {new_order.side}')
@@ -170,7 +170,7 @@ class ExecutionAdapter:
             'order_id': eid,
             'size': str(round(new_order.quantity, self.ROUNDING_QTY))
         }
-        if new_order.type == order_type.limit:
+        if new_order.type == OrderType.limit:
             body['price'] = str(new_order.price)
 
         final_data = {
@@ -198,7 +198,7 @@ class ExecutionAdapter:
         return res
 
     async def amend_orders(self, new_orders, old_orders):
-        res = api_result()
+        res = ApiResult()
 
         data = []
         for new_order, old_order in zip(new_orders, old_orders):
@@ -210,9 +210,9 @@ class ExecutionAdapter:
                 return res
 
             ord_type = ''
-            if new_order.type == order_type.mkt:
+            if new_order.type == OrderType.mkt:
                 ord_type = 'market'
-            elif new_order.type == order_type.limit:
+            elif new_order.type == OrderType.limit:
                 ord_type = 'limit'
             else:
                 raise Exception(f'Unknown order type. Type = {new_order.type}')
@@ -221,9 +221,9 @@ class ExecutionAdapter:
                 raise Exception(f'Wrong order side. Side = {new_order.side}')
 
             side = ''
-            if new_order.side == order_side.buy:
+            if new_order.side == OrderSide.buy:
                 side = 'buy'
-            elif new_order.side == order_side.sell:
+            elif new_order.side == OrderSide.sell:
                 side = 'sell'
             else:
                 raise Exception(f'Unknown order side. Type = {new_order.side}')
@@ -234,7 +234,7 @@ class ExecutionAdapter:
                 'order_id': eid,
                 'size': str(round(new_order.quantity, self.ROUNDING_QTY))
             }
-            if new_order.type == order_type.limit:
+            if new_order.type == OrderType.limit:
                 body['price'] = str(new_order.price)
             data.append(body)
 
@@ -260,20 +260,20 @@ class ExecutionAdapter:
         return res
 
     async def send_order(self, order):
-        res = api_result()
+        res = ApiResult()
 
         side = ''
-        if order.side == order_side.buy:
+        if order.side == OrderSide.buy:
             side = 'buy'
-        elif order.side == order_side.sell:
+        elif order.side == OrderSide.sell:
             side = 'sell'
         else:
             raise Exception(f'Unknown order side. Type = {order.side}')
 
         ord_type = ''
-        if order.type == order_type.mkt:
+        if order.type == OrderType.mkt:
             ord_type = 'market'
-        elif order.type == order_type.limit:
+        elif order.type == OrderType.limit:
             ord_type = 'limit'
         else:
             raise Exception(f'Unknown order type. Type = {order.type}')
@@ -285,7 +285,7 @@ class ExecutionAdapter:
             'side': side,
             'size': str(round(order.quantity, self.ROUNDING_QTY))
         }
-        if order.type == order_type.limit:
+        if order.type == OrderType.limit:
             body['price'] = str(order.price)
 
         final_data = {
@@ -306,7 +306,7 @@ class ExecutionAdapter:
         return res
 
     async def cancel_order(self, order_id):
-        res = api_result()
+        res = ApiResult()
         try:
             eid = self.shared_storage.uid_to_eid[order_id]
         except KeyError:
@@ -337,7 +337,7 @@ class ExecutionAdapter:
         return res
 
     async def cancel_active_orders(self):
-        res = api_result()
+        res = ApiResult()
 
         body = {
             'contract_code': self.config.symbol

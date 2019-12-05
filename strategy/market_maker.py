@@ -1,24 +1,24 @@
 import time
 import traceback
 
-from .strategy_interface import strategy_interface
+from strategy.strategy_interface import StrategyInterface
 from orders_manager import OrdersManager
 
 from logger import logging
 
 from definitions import (
-    tob,
-    order_request,
-    order_type,
-    order_side,
-    exchange_orders,
-    new_order_rejection,
-    amend_rejection,
-    position,
+    TopOfBook,
+    OrderRequest,
+    OrderType,
+    OrderSide,
+    ExchangeOrders,
+    NewOrderRejection,
+    AmendRejection,
+    Position,
 )
 
 
-class MarketMaker(strategy_interface):
+class MarketMaker(StrategyInterface):
     TIME_TO_WAIT_SINCE_START_SECS = 10
     MAX_NUMBER_OF_ATTEMPTS_SECS = 5
 
@@ -145,7 +145,7 @@ class MarketMaker(strategy_interface):
         if self.active is False:
             self.logger.info('Strategy is not active, update will be ignored')
             return
-        elif isinstance(update, tob):
+        elif isinstance(update, TopOfBook):
             if self.tob is None:
                 self.update_orders_flag = True
                 self.tob = update
@@ -153,13 +153,13 @@ class MarketMaker(strategy_interface):
                 self.update_orders_flag = True
                 self.tob = update
             return
-        elif isinstance(update, exchange_orders):
+        elif isinstance(update, ExchangeOrders):
             await self.process_active_orders_on_start(update)
             return
-        elif isinstance(update, position):
+        elif isinstance(update, Position):
             self.current_position = update.position
             return
-        elif isinstance(update, (amend_rejection, new_order_rejection)):
+        elif isinstance(update, (AmendRejection, NewOrderRejection)):
             self.logger.info(f'Received order rejection {update.__dict__}')
 
         try:
@@ -215,10 +215,10 @@ class MarketMaker(strategy_interface):
         orders = []
         for quote in self.user_asks:
             level, qty = quote
-            order = order_request()
+            order = OrderRequest()
             order.instrument_name = self.config.instrument_name
-            order.side = order_side.sell
-            order.type = order_type.limit
+            order.side = OrderSide.sell
+            order.type = OrderType.limit
 
             order.price = round(best_ask + self.tick_size * level, self.price_rounding)
             order.quantity = qty
@@ -226,10 +226,10 @@ class MarketMaker(strategy_interface):
 
         for quote in self.user_bids:
             level, qty = quote
-            order = order_request()
+            order = OrderRequest()
             order.instrument_name = self.config.instrument_name
-            order.side = order_side.buy
-            order.type = order_type.limit
+            order.side = OrderSide.buy
+            order.type = OrderType.limit
 
             order.price = round(best_bid - self.tick_size * level, self.price_rounding)
             order.quantity = qty
@@ -237,8 +237,8 @@ class MarketMaker(strategy_interface):
         return orders
 
     def perform_retreats(self, orders):
-        bids_ = [order for order in orders if order.side == order_side.buy]
-        asks_ = [order for order in orders if order.side == order_side.sell]
+        bids_ = [order for order in orders if order.side == OrderSide.buy]
+        asks_ = [order for order in orders if order.side == OrderSide.sell]
 
         if self.current_position is None:
             return None
