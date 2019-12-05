@@ -118,7 +118,6 @@ class ExecutionAdapter:
             if order.type == order_type.limit:
                 body['price'] = str(order.price)
             data.append(body)
-            self.shared_storage.orders[order.order_id] = order
 
         final_data = {
             'channel': 'trading',
@@ -187,9 +186,7 @@ class ExecutionAdapter:
 
         self.shared_storage.eid_to_uid[eid] = new_order.order_id
         self.shared_storage.uid_to_eid[new_order.order_id] = eid
-        self.shared_storage.eid_to_uid_amend[eid] = old_order.order_id
         self.shared_storage.eids_to_amend[eid] = True
-        self.shared_storage.orders[new_order.order_id] = new_order
 
         self.logger.debug(f'Ids mapped during amend, eid = {eid}, uid = {new_order.order_id}')
         try:
@@ -243,9 +240,7 @@ class ExecutionAdapter:
 
             self.shared_storage.eid_to_uid[eid] = new_order.order_id
             self.shared_storage.uid_to_eid[new_order.order_id] = eid
-            self.shared_storage.eid_to_uid_amend[eid] = old_order.order_id
             self.shared_storage.eids_to_amend[eid] = True
-            self.shared_storage.orders[new_order.order_id] = new_order
             self.logger.debug(f'Ids mapped during amend, eid = {eid}, uid = {new_order.order_id}')
 
         final_data = {
@@ -299,8 +294,6 @@ class ExecutionAdapter:
             'action': 'create-order',
             'data': body
         }
-
-        self.shared_storage.orders[order.order_id] = order
 
         self.logger.info(
             f'EMX sending new order request. OrderId = {order.order_id}, Data: {final_data}')

@@ -1,12 +1,12 @@
 import asyncio
 
-from ws_client import websocket_client
+from websocket_client import WebsocketClient
 
 from gateways.gateway_interface import GatewayInterface
 from gateways.emx.execution import ExecutionAdapter
 from gateways.emx.streaming import StreamingAdapter
-from gateways.emx.shared_storage import shared_storage
-from gateways.emx.auth import auth
+from gateways.emx.shared_storage import SharedStorage
+from gateways.emx.authentication import Authentication
 
 
 class EmxAdapter(GatewayInterface):
@@ -14,9 +14,9 @@ class EmxAdapter(GatewayInterface):
         super().__init__()
 
         self.config = config
-        self.storage = shared_storage()
-        self.ws = websocket_client()
-        self.auth = auth(self.config)
+        self.storage = SharedStorage()
+        self.ws = WebsocketClient()
+        self.auth = Authentication(self.config)
 
         self.execution = ExecutionAdapter(self.config.execution, self.auth, self.ws, self.storage)
         self.streaming = StreamingAdapter(self.config.streaming, self.auth, self.storage)
@@ -46,7 +46,7 @@ class EmxAdapter(GatewayInterface):
         return await self.execution.cancel_order(order_id)
 
     async def cancel_orders(self, orders_ids):
-        raise Exception("cancel_orders method is not implemented yet")
+        raise Exception('cancel_orders method is not implemented yet')
 
     async def cancel_active_orders(self):
         return await self.execution.cancel_active_orders()
@@ -69,8 +69,7 @@ class EmxAdapter(GatewayInterface):
         try:
             await self.ws.create_session_and_connection(url, sub_params)
         except Exception as err:
-            raise Exception(
-                "{} create_session_and_connection failed on {}".format(self.config.name, err))
+            raise Exception(f'{self.config.name} create_session_and_connection failed on {err}')
 
         self.ready_to_listen.set()
 
