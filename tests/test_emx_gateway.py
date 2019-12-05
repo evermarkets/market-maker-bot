@@ -4,7 +4,7 @@ import datetime
 from munch import DefaultMunch
 
 from gateways.emx import streaming, execution
-from gateways.emx.shared_storage import shared_storage
+from gateways.emx.shared_storage import SharedStorage
 
 from definitions import (
     new_order_ack,
@@ -73,7 +73,7 @@ async def test_streaming_fill(cfg_fixture):
         "type": "subscriptions",
     }
 
-    strg = shared_storage()
+    strg = SharedStorage()
     strg.eid_to_uid["475cc533-7248-4266-87ab-3cb82b64b4c7"] = "test_uid"
     adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
@@ -117,7 +117,7 @@ async def test_streaming_multiple_fills(cfg_fixture):
         "type": "subscriptions",
     }
 
-    strg = shared_storage()
+    strg = SharedStorage()
     strg.eid_to_uid["475cc533-7248-4266-87ab-3cb82b64b4c7"] = "test_uid"
     adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
@@ -189,7 +189,7 @@ async def test_streaming_full_fill(cfg_fixture):
         "type": "subscriptions",
     }
 
-    strg = shared_storage()
+    strg = SharedStorage()
     strg.eid_to_uid["475cc533-7248-4266-87ab-3cb82b64b4c7"] = "test_uid"
     adapter = streaming.StreamingAdapter(cfg_fixture, None, strg)
 
