@@ -10,7 +10,7 @@ strategy:
     tick_size: 0.000001
     price_rounding: 6
 
-    position_retreat:
+    positional_retreat:
         position_increment: 100
         retreat_ticks: 5
 
