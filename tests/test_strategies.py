@@ -116,9 +116,11 @@ def cfg_strategy_fixture():
 
     b.tick_size = 1
     b.price_rounding = 2
-    b.cancel_orders_on_start = False
     b.stop_strategy_on_error = True
-    b.cancel_orders_on_reconnection = True
+
+    b.positional_retreat = DefaultMunch()
+    b.positional_retreat.position_increment = 100
+    b.positional_retreat.retreat_ticks = 5
 
     b.orders = DefaultMunch()
     b.orders.asks = [[0, 1]]
@@ -234,3 +236,35 @@ async def test_maker_rounding_mid_based_3(cfg_strategy_fixture):
 
     assert orders[0].price == 100
     assert orders[1].price == 99
+
+
+@pytest.mark.asyncio
+async def test_maker_positional_retreat(cfg_strategy_fixture):
+    try:
+        strategy = MarketMaker(cfg_strategy_fixture, bittest_adapter())
+    except Exception:
+        assert False
+
+    _tob = tob()
+    _tob.exchange = "test_exchange"
+    _tob.product = "test-perp"
+    _tob.best_bid_price = 99.0
+    _tob.best_bid_qty = 1
+    _tob.best_ask_price = 101.0
+    _tob.best_ask_qty = 1
+    _tob.timestamp = 0.0
+
+    strategy.tob = _tob
+
+    orders = strategy.generate_orders()
+
+    assert orders[0].price == _tob.best_ask_price
+    assert orders[1].price == _tob.best_bid_price
+
+    assert strategy.should_perform_positional_retreat()
+
+    strategy.current_position = 200
+    orders = strategy.perform_retreats(orders)
+
+    assert orders[0].price == _tob.best_bid_price - 10*strategy.tick_size
+    assert orders[1].price == _tob.best_ask_price

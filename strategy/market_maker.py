@@ -46,8 +46,8 @@ class MarketMaker(strategy_interface):
         self.current_position = None
         self.num_of_sent_orders = 0
         self.cancel_all_request_was_sent = False
-        self.position_retreat_increment = self.position_retreat.position_increment
-        self.position_retreat_ticks = self.position_retreat.retreat_ticks
+        self.positional_retreat_increment = self.positional_retreat.position_increment
+        self.positional_retreat_ticks = self.positional_retreat.retreat_ticks
 
         self.user_asks = self.config.orders.asks
         self.user_bids = self.config.orders.bids
@@ -59,7 +59,7 @@ class MarketMaker(strategy_interface):
             'tick_size',
             'price_rounding',
             'stop_strategy_on_error',
-            'position_retreat'
+            'positional_retreat'
         )
         for option_name in option_names:
             option = getattr(cfg, option_name)
@@ -68,8 +68,8 @@ class MarketMaker(strategy_interface):
                 raise Exception(f'{option_name} was not found')
             setattr(self, option_name, option)
 
-    def should_perform_position_retreat(self):
-        return self.position_retreat_increment and self.position_retreat_ticks
+    def should_perform_positional_retreat(self):
+        return not( not self.positional_retreat_increment and not self.positional_retreat_ticks)
 
     async def handle_exception(self, err_msg):
         self.logger.error(f'handle_exception traceback: {err_msg}')
@@ -243,9 +243,10 @@ class MarketMaker(strategy_interface):
         if self.current_position is None:
             return None
 
-        retreat_in_ticks = int(self.current_position / self.position_retreat.position_increment) * \
-                           self.position_retreat.retreat_ticks
+        retreat_in_ticks = int(self.current_position / self.positional_retreat_increment) * \
+                           self.positional_retreat_ticks
         if retreat_in_ticks == 0:
+            # position is insufficient for retreating
             return orders
 
         if retreat_in_ticks > 0.0:
@@ -288,7 +289,7 @@ class MarketMaker(strategy_interface):
             return
 
         orders = self.generate_orders()
-        if self.should_perform_position_retreat():
+        if self.should_perform_positional_retreat():
             orders = self.perform_retreats(orders)
             if not orders:
                 self.logger.warning("Failed to perform retreat adjustment")
