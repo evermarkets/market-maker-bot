@@ -2,7 +2,7 @@ import time
 from enum import Enum, auto
 
 
-class event(Enum):
+class Event(Enum):
     on_creation = auto()
     on_insert_ack = auto()
     on_insert_rejection = auto()
@@ -17,7 +17,7 @@ class event(Enum):
     on_amend_rejection = auto()
 
 
-class state:
+class State:
     def on_event(self, event):
         pass
 
@@ -28,134 +28,132 @@ class state:
         return self.__class__.__name__
 
 
-class inactive(state):
+class Inactive(State):
     def on_event(self, event):
         if event == event.on_creation:
-            return insert_pending()
-        raise Exception(f'invalid event for the current state. '
-                        f'event = {event}, state = {self.__class__.__name__}')
+            return InsertPending()
         return self
 
 
-class insert_pending(state):
+class InsertPending(State):
     def on_event(self, event):
         if event == event.on_insert_rejection:
-            return insert_failed()
+            return InsertFailed()
         elif event == event.on_cancel:
-            return cancel_pending()
+            return CancelPending()
         elif event == event.on_insert_ack:
-            return active()
+            return Active()
         elif event == event.on_cancel_ack:
-            return cancelled()
+            return Cancelled()
         elif event == event.on_fill:
-            return fill()
+            return Fill()
         elif event == event.on_full_fill:
-            return full_fill()
+            return FullFill()
         return self
 
 
-class active(state):
+class Active(State):
     def on_event(self, event):
         if event == event.on_fill:
-            return fill()
+            return Fill()
         elif event == event.on_insert_rejection:
-            return insert_failed()
+            return InsertFailed()
         elif event == event.on_cancel:
-            return cancel_pending()
+            return CancelPending()
         elif event == event.on_amend:
-            return amend_pending()
+            return AmendPending()
         elif event == event.on_fill:
-            return fill()
+            return Fill()
         elif event == event.on_full_fill:
-            return full_fill()
+            return FullFill()
         elif event == event.on_amend_rejection:
-            return inactive()
+            return Inactive()
         return self
 
 
-class amend_pending(state):
+class AmendPending(State):
     def on_event(self, event):
         if event == event.on_cancel:
-            return cancel_pending()
+            return CancelPending()
         elif event == event.on_amend_ack:
-            return active()
+            return Active()
         elif event == event.on_amend_partial_ack:
-            return active()
+            return Active()
         elif event == event.on_amend_rejection:
-            return inactive()
+            return Inactive()
         elif event == event.on_fill:
-            return fill()
+            return Fill()
         elif event == event.on_full_fill:
-            return full_fill()
+            return FullFill()
         elif event == event.on_cancel_ack:
-            return cancelled()
+            return Cancelled()
         return self
 
 
-class cancelled(state):
+class Cancelled(State):
     def on_event(self, event):
         if event == event.on_creation:
-            return insert_pending()
+            return InsertPending()
         return self
 
 
-class insert_failed(state):
+class InsertFailed(State):
     def on_event(self, event):
         return self
 
 
-class fill(state):
+class Fill(State):
     def on_event(self, event):
         if event == event.on_full_fill:
-            return full_fill()
+            return FullFill()
         elif event == event.on_cancel:
-            return cancel_pending()
+            return CancelPending()
         elif event == event.on_amend:
-            return amend_pending()
+            return AmendPending()
         elif event == event.on_cancel:
-            return cancel_pending()
+            return CancelPending()
         elif event == event.on_cancel_ack:
-            return cancelled()
+            return Cancelled()
         return self
 
 
-class full_fill(state):
+class FullFill(State):
     def on_event(self, event):
         if event == event.on_cancel:
-            return cancel_pending()
+            return CancelPending()
         elif event == event.on_fill:
-            return fill()
+            return Fill()
         elif event == event.on_amend_partial_ack:
-            return fill()
+            return Fill()
         elif event == event.on_creation:
-            return insert_pending()
+            return InsertPending()
         return self
 
 
-class cancel_pending(state):
+class CancelPending(State):
     def on_event(self, event):
         if event == event.on_fill:
-            return fill()
+            return Fill()
         elif event == event.on_cancel_ack:
-            return cancelled()
+            return Cancelled()
         elif event == event.on_cancel_rejection:
-            return cancel_failed()
+            return CancelFailed()
         return self
 
 
-class cancel_failed(state):
+class CancelFailed(State):
     def on_event(self, event):
         if event == event.on_fill:
-            return fill()
+            return Fill()
         elif event == event.on_full_fill:
-            return full_fill()
+            return FullFill()
         return self
 
 
-class order_state:
+class OrderState:
     def __init__(self):
         self.order_id = None
-        self.state = inactive()
+        self.state = Inactive()
         self.last_update_timestamp = None
 
     def on_event(self, event):

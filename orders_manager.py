@@ -1,17 +1,17 @@
 import uuid
 
-from order_state import event
 from order_state import (
-    active,
-    fill,
-    full_fill,
-    cancelled,
-    inactive,
-    insert_pending,
-    amend_pending,
-    cancel_pending,
-    order_state,
-    cancel_failed,
+    Event,
+    Active,
+    Fill,
+    FullFill,
+    Cancelled,
+    Inactive,
+    InsertPending,
+    AmendPending,
+    CancelPending,
+    OrderState,
+    CancelFailed,
 )
 
 from definitions import (
@@ -62,15 +62,15 @@ class OrdersManager:
         self.ids_to_fills = {}
 
         self.update_type_to_state = {
-            NewOrderAcknowledgement: event.on_insert_ack,
-            NewOrderRejection: event.on_insert_rejection,
-            OrderEliminationAcknowledgement: event.on_cancel_ack,
-            OrderEliminationRejection: event.on_cancel_rejection,
-            OrderFillAcknowledgement: event.on_fill,
-            OrderFullFillAcknowledgement: event.on_full_fill,
-            AmendAcknowledgement: event.on_amend_ack,
-            AmendAcknowledgementPartial: event.on_amend_partial_ack,
-            AmendRejection: event.on_amend_rejection,
+            NewOrderAcknowledgement: Event.on_insert_ack,
+            NewOrderRejection: Event.on_insert_rejection,
+            OrderEliminationAcknowledgement: Event.on_cancel_ack,
+            OrderEliminationRejection: Event.on_cancel_rejection,
+            OrderFillAcknowledgement: Event.on_fill,
+            OrderFullFillAcknowledgement: Event.on_full_fill,
+            AmendAcknowledgement: Event.on_amend_ack,
+            AmendAcknowledgementPartial: Event.on_amend_partial_ack,
+            AmendRejection: Event.on_amend_rejection,
         }
 
         self.logger = logging.getLogger()
@@ -87,7 +87,7 @@ class OrdersManager:
             order.order_id = generate_id()
 
         self.orders[order.order_id] = order
-        self.update_order_state(order.order_id, event.on_creation)
+        self.update_order_state(order.order_id, Event.on_creation)
 
         try:
             res = await self.exchange_adapter.send_order(order)
@@ -111,7 +111,7 @@ class OrdersManager:
         for elem in orders:
             self.orders[elem.order_id] = elem
             self.live_orders_ids.append(elem.order_id)
-            self.update_order_state(elem.order_id, event.on_creation)
+            self.update_order_state(elem.order_id, Event.on_creation)
 
         try:
             res = await self.exchange_adapter.send_orders(orders)
@@ -126,9 +126,9 @@ class OrdersManager:
     async def amend_order(self, new, existing):
         self.orders[new.order_id] = new
 
-        self.update_order_state(new.order_id, event.on_creation)
-        self.update_order_state(new.order_id, event.on_insert_ack)
-        self.update_order_state(new.order_id, event.on_amend)
+        self.update_order_state(new.order_id, Event.on_creation)
+        self.update_order_state(new.order_id, Event.on_insert_ack)
+        self.update_order_state(new.order_id, Event.on_amend)
 
         try:
             res = await self.exchange_adapter.amend_order(new, existing)
@@ -189,7 +189,7 @@ class OrdersManager:
         for order in new_orders:
             self.live_orders_ids.append(order.order_id)
             self.orders[order.order_id] = order
-            self.update_order_state(order.order_id, event.on_amend)
+            self.update_order_state(order.order_id, Event.on_amend)
 
     async def amend_orders(self, new_orders, existing_orders):
         for elem in new_orders:
@@ -217,10 +217,10 @@ class OrdersManager:
             except KeyError:
                 self.logger.debug(f'Order status was not found. Order id {existing.order_id}')
 
-            if isinstance(existing_state, fill):
+            if isinstance(existing_state, Fill):
                 orders_to_place.append(new)
                 orders_ids_to_cancel.append(existing.order_id)
-            elif isinstance(existing_state, cancelled) or isinstance(existing_state, full_fill):
+            elif isinstance(existing_state, Cancelled) or isinstance(existing_state, FullFill):
                 self.live_orders_ids.remove(existing.order_id)
                 try:
                     del self.ids_to_fills[existing.order_id]
@@ -231,10 +231,10 @@ class OrdersManager:
                         f'Order {existing.order_id} failed to be removed from ids_to_fills')
 
                 orders_to_place.append(new)
-            elif isinstance(existing_state, cancelled) or isinstance(existing_state, full_fill):
+            elif isinstance(existing_state, Cancelled) or isinstance(existing_state, FullFill):
                 self.live_orders_ids.remove(existing.order_id)
                 orders_to_place.append(new)
-            elif isinstance(existing_state, active):
+            elif isinstance(existing_state, Active):
                 if abs(new.quantity - existing.quantity) < self.ORDERS_QTY_DIFF and \
                         abs(new.price - existing.price) < self.ORDERS_QTY_DIFF:
                     self.logger.debug(f'Order {new.order_id} will be ignored, no need to amend')
@@ -256,7 +256,7 @@ class OrdersManager:
             raise
 
     async def cancel_order(self, order_id):
-        self.update_order_state(order_id, event.on_cancel)
+        self.update_order_state(order_id, Event.on_cancel)
 
         try:
             res = await self.exchange_adapter.cancel_order(order_id)
@@ -275,7 +275,7 @@ class OrdersManager:
     async def cancel_orders(self, order_ids):
         try:
             order_ids = [oid for oid in order_ids if
-                         isinstance(self.orders_states[oid], full_fill) is False]
+                         isinstance(self.orders_states[oid], FullFill) is False]
         except KeyError as err:
             self.logger.error(f'Failed to find an order for the cancellation {err}')
             return
@@ -301,22 +301,22 @@ class OrdersManager:
     def is_ready_for_amend(self, order_id):
         return not isinstance(self.orders_states[order_id].state,
                               (
-                                  inactive,
-                                  insert_pending,
-                                  amend_pending,
-                                  cancel_failed,
-                                  cancel_pending
+                                  Inactive,
+                                  InsertPending,
+                                  AmendPending,
+                                  CancelFailed,
+                                  CancelPending
                               )
                               )
 
     def update_order_state(self, order_id, upd_event):
-        if isinstance(upd_event, event) is False:
+        if isinstance(upd_event, Event) is False:
             _upd_event = self.update_type_to_state[upd_event.__class__]
         else:
             _upd_event = upd_event
 
-        if _upd_event is event.on_creation:
-            curr_state = self.orders_states[order_id] = order_state()
+        if _upd_event is Event.on_creation:
+            curr_state = self.orders_states[order_id] = OrderState()
         else:
             try:
                 curr_state = self.orders_states[order_id]
@@ -325,15 +325,15 @@ class OrdersManager:
                     f'{self.exchange_name} Order state was not found for order_id = {order_id}')
                 return
 
-        if _upd_event == event.on_full_fill:
+        if _upd_event == Event.on_full_fill:
             _order = self.orders.get(upd_event.order_id)
             if _order:
                 if _order.quantity > upd_event.running_fill_qty:
                     self.logger.warning(
                         f'Inflight partial fill was detected.'
                         f' Recorded order {_order}, full_fill {upd_event}')
-                    _upd_event = event.on_fill
-        elif _upd_event == event.on_fill:
+                    _upd_event = Event.on_fill
+        elif _upd_event == Event.on_fill:
             try:
                 self.ids_to_fills[upd_event.order_id] = upd_event
             except AttributeError:
@@ -373,10 +373,10 @@ class OrdersManager:
             self.orders[elem.order_id] = elem
             self.live_orders_ids.append(elem.order_id)
 
-            self.update_order_state(elem.order_id, event.on_creation)
-            self.update_order_state(elem.order_id, event.on_insert_ack)
-            self.update_order_state(elem.order_id, event.on_amend)
-            self.update_order_state(elem.order_id, event.on_amend_ack)
+            self.update_order_state(elem.order_id, Event.on_creation)
+            self.update_order_state(elem.order_id, Event.on_insert_ack)
+            self.update_order_state(elem.order_id, Event.on_amend)
+            self.update_order_state(elem.order_id, Event.on_amend_ack)
 
             if exchange_elem.filled_quantity > 0.0:
                 _fill = OrderFillAcknowledgement()
@@ -388,14 +388,14 @@ class OrdersManager:
                 _fill.order_qty = exchange_elem.quantity
 
                 self.ids_to_fills[elem.order_id] = _fill
-                self.update_order_state(elem.order_id, event.on_fill)
+                self.update_order_state(elem.order_id, Event.on_fill)
 
         return orders
 
     def active_orders_ids(self):
         return [oid for oid in self.live_orders_ids if
-                isinstance(self.orders_states[oid].state, active) or isinstance(
-                    self.orders_states[oid].state, fill)]
+                isinstance(self.orders_states[oid].state, Active) or isinstance(
+                    self.orders_states[oid].state, Fill)]
 
     def get_number_of_active_orders(self):
         return len(self.active_orders_ids())
