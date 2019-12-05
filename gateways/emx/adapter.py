@@ -15,10 +15,11 @@ class EmxAdapter(GatewayInterface):
 
         self.config = config
         self.storage = SharedStorage()
-        self.ws = WebsocketClient()
+        self.websocket = WebsocketClient()
         self.auth = Authentication(self.config)
 
-        self.execution = ExecutionAdapter(self.config.execution, self.auth, self.ws, self.storage)
+        self.execution = ExecutionAdapter(self.config.execution, self.auth,
+                                          self.websocket, self.storage)
         self.streaming = StreamingAdapter(self.config.streaming, self.auth, self.storage)
 
     def set_order_update_callback(self, msg_callback):
@@ -67,7 +68,7 @@ class EmxAdapter(GatewayInterface):
                 f'{self.config.name} Params for creating the connection was not created')
 
         try:
-            await self.ws.create_session_and_connection(url, sub_params)
+            await self.websocket.create_session_and_connection(url, sub_params)
         except Exception as err:
             raise Exception(f'{self.config.name} create_session_and_connection failed on {err}')
 

@@ -66,76 +66,77 @@ class GatewayInterface(abc.ABC):
             try:
                 if time.time() - self.last_hb_time >= 30:
                     try:
-                        await self.ws.ping("keepalive")
+                        await self.websocket.ping('keepalive')
                     except Exception as err:
-                        self.logger.info("Ping failed: {}".format(err))
+                        self.logger.info(f'Ping failed: {err}')
                         await asyncio.sleep(0.1)
                         continue
                     self.last_hb_time = time.time()
 
                 try:
-                    msg = await self.ws.receive()
-                    if msg is None: continue
+                    msg = await self.websocket.receive()
+                    if msg is None:
+                        continue
                 except Exception as err:
-                    self.logger.info("Receive failed: {}".format(err))
+                    self.logger.info(f'Receive failed: {err}')
                     if self.reconnecting is False:
-                        self.logger.error("Will be reconnected. Receive failed: {}".format(err))
-                        raise Exception("Failed to get ws msg")
+                        self.logger.error(f'Will be reconnected. Receive failed: {err}')
+                        raise Exception('Failed to get ws msg')
                     await asyncio.sleep(0.1)
                     continue
 
-                self.logger.debug("WS msg received: {}".format(msg))
+                self.logger.debug(f'websocket msg received: {msg}')
                 if msg.type == aiohttp.WSMsgType.closed:
                     if self.reconnecting is False:
-                        self.logger.warning("Connection msg closed was received")
-                        raise Exception("Connection msg closed was received")
+                        self.logger.warning('Connection msg closed was received')
+                        raise Exception('Connection msg closed was received')
                     continue
                 elif msg.type == aiohttp.WSMsgType.closing:
-                    self.logger.warning("Connection is closing")
+                    self.logger.warning('Connection is closing')
                     continue
                 elif msg.type == aiohttp.WSMsgType.close:
-                    self.logger.warning("Connection is closed")
+                    self.logger.warning('Connection is closed')
                     continue
                 elif msg.type == aiohttp.WSMsgType.error:
-                    self.logger.warning("Connection msg error was received")
-                    raise Exception("Connection msg error was received")
+                    self.logger.warning('Connection msg error was received')
+                    raise Exception('Connection msg error was received')
             except Exception as e:
-                self.logger.warning("Exception raised: {}".format(e))
-                raise Exception("Exception raised: {}".format(e))
+                self.logger.warning(f'Exception raised: {e}')
+                raise Exception(f'Exception raised: {s}')
             if msg.type == aiohttp.WSMsgType.text:
                 try:
                     msg = json.loads(msg.data)
                 except ValueError:
-                    self.logger.warning("Unable to load the msg. Msg = {}".format(msg))
-                    raise Exception("Unable to load the msg. Msg = {}".format(msg))
+                    self.logger.warning(f'Unable to load the msg. Msg = {msg}')
+                    raise Exception(f'Unable to load the msg. Msg = {msg}')
                 try:
                     await self.streaming.process(msg, self.msg_callback)
                 except Exception as e:
-                    self.logger.warning("Exception raised during processing: {}".format(e))
-                    raise Exception("Exception raised during processing: {}".format(e))
+                    self.logger.warning(f'Exception raised during processing: {e}')
+                    raise Exception(f'Exception raised during processing: {e}')
             else:
-                raise Exception("Unknown msg type was received. Msg = {}".format(msg))
+                raise Exception(f'Unknown msg type was received. {msg}')
 
     async def reconnect(self):
         if self.reconnecting:
             return
 
-        self.logger.warning("Gateway will be reconnected")
+        self.logger.warning('Gateway will be reconnected')
 
         self.reconnecting = True
 
-        await self.ws.close()
+        await self.websocket.close()
 
-        self.logger.warning("Connection is closed before new attempt")
+        self.logger.warning('Connection is closed before new attempt')
 
         try:
             await self.start()
         except Exception as err:
             self.reconnecting = False
-            raise Exception("Restart failed. Reason: {}".format(err))
+            raise Exception(f'Restart failed. Reason: {err}')
         except Exception as err:
             self.reconnecting = False
-            raise Exception("Catch Exception. Restart failed. Reason: {}".format(err))
+            raise Exception(f'Catch Exception. Restart failed. Reason: {err}')
 
         self.reconnecting = False
-        self.logger.warning("Connection was established")
+        self.logger.warning('Connection was established')

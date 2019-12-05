@@ -292,7 +292,7 @@ class MarketMaker(StrategyInterface):
         if self.should_perform_positional_retreat():
             orders = self.perform_retreats(orders)
             if not orders:
-                self.logger.warning("Failed to perform retreat adjustment")
+                self.logger.warning('Failed to perform retreat adjustment')
                 return
 
         try:
