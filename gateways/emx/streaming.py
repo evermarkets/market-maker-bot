@@ -377,7 +377,7 @@ class StreamingAdapter:
     def process_elimination(self, msg):
         if self.config.symbol and msg['contract_code'] not in self.config.symbol:
             self.logger.warning(f'emx msg for the wrong instrument. {msg}')
-            return
+            return None
 
         self.logger.info(f'Emx received elimination: {msg}')
         try:
@@ -388,7 +388,11 @@ class StreamingAdapter:
             uid = self.shared_storage.eid_to_uid[eid]
         except KeyError:
             self.logger.warning(f'Got elim ack, but unable to find uid for {eid}')
-            return
+            return None
+
+        if float(msg['size']) == float(msg['size_filled']):
+            self.logger.warning(f'Got full filled order elimination')
+            return None
 
         ack = OrderEliminationAcknowledgement()
         ack.order_id = uid
