@@ -11,8 +11,8 @@ strategy:
     price_rounding: 6
 
     positional_retreat:
-        position_increment: 100
-        retreat_ticks: 5
+        position_increment: null
+        retreat_ticks: null
 
     orders:
         asks: [
