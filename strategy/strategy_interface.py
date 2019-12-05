@@ -1,7 +1,7 @@
 import abc
 
 
-class strategy_interface(abc.ABC):
+class StrategyInterface(abc.ABC):
 
     @abc.abstractmethod
     async def run(self):
