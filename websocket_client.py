@@ -6,7 +6,7 @@ import aiohttp
 from logger import logging
 
 
-class websocket_client():
+class WebsocketClient():
     def __init__(self, exchange_name=None):
         self.ws = None
         self.session = None
