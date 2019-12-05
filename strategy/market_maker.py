@@ -15,6 +15,7 @@ from definitions import (
     NewOrderRejection,
     AmendRejection,
     Position,
+    OrderEliminationAcknowledgement,
 )
 
 
@@ -162,6 +163,10 @@ class MarketMaker(StrategyInterface):
             return
         elif isinstance(update, (AmendRejection, NewOrderRejection)):
             self.logger.info(f'Received order rejection {update.__dict__}')
+            raise Exception(f'Received order rejection {update.__dict__}')
+        elif isinstance(update, OrderEliminationAcknowledgement):
+            self.logger.info(f'Received order elimination {update.__dict__}')
+            raise Exception(f'Received order elimination {update.__dict__}')
 
         try:
             self.orders_manager.update_order_state(update.order_id, update)

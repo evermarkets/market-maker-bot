@@ -42,8 +42,8 @@ class StreamingAdapter:
             'accepted': self.process_accept,
             'rejected': self.process_new_rejection,
             'modify-rejected': self.process_amend_rejection,
-            'canceled': self.process_elim,
-            'cancel-rejected': self.process_elim_reject,
+            'canceled': self.process_elimination,
+            'cancel-rejected': self.process_elimination_reject,
             'filled': self.process_fill,
         }
 
@@ -374,7 +374,7 @@ class StreamingAdapter:
         rejection.rejection_reason = msg.get('message')
         return rejection
 
-    def process_elim(self, msg):
+    def process_elimination(self, msg):
         if self.config.symbol and msg['contract_code'] not in self.config.symbol:
             self.logger.warning(f'emx msg for the wrong instrument. {msg}')
             return
@@ -394,7 +394,7 @@ class StreamingAdapter:
         ack.order_id = uid
         return ack
 
-    def process_elim_reject(self, msg):
+    def process_elimination_reject(self, msg):
         if self.config.symbol and msg['contract_code'] not in self.config.symbol:
             self.logger.warning(f'emx msg for the wrong instrument. {msg}')
             return
