@@ -117,6 +117,7 @@ class ExecutionAdapter:
             }
             if order.type == OrderType.limit:
                 body['price'] = str(order.price)
+                body['post_only'] = True
             data.append(body)
 
         final_data = {
