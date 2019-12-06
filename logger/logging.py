@@ -1,3 +1,4 @@
+import os
 import logging
 from .log_formatter import LogFormatter
 
@@ -21,9 +22,8 @@ def setup_logging(cfg, app_name):
     handler = logging.StreamHandler()
     handler.setFormatter(LogFormatter())
 
-    if cfg.logger.logging_folder:
-        file_path = f'{cfg.logger.logging_folder}{cfg.logger.name}.txt'
-        logging.basicConfig(filename=file_path, level=logging.WARNING)
+    if cfg.logger.path_to_file:
+        logging.basicConfig(filename=cfg.logger.path_to_file, level=logging.WARNING)
     else:
         logging.basicConfig(level=logging.WARNING, handlers=[handler])
     app_logger = logging.getLogger(app_name)
