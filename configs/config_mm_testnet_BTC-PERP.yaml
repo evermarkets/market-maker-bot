@@ -1,6 +1,7 @@
 logger:
     level: INFO
-    name: mm_bot_logger
+    name: mm_bot_logger_btc-perp
+    logging_folder: /home/pasha/sandbox/emx/market-maker-bot/
 
 strategy:
     name: market_maker
@@ -16,13 +17,13 @@ strategy:
 
     orders:
         asks: [
-                [1, 0.01],
-                [2, 0.02],
+                [2, 0.01],
+                [3, 0.02],
                 [5, 0.03],
               ]
         bids: [
-                [1, 0.01],
-                [2, 0.02],
+                [2, 0.01],
+                [3, 0.02],
                 [5, 0.03],
               ]
 
@@ -37,4 +38,3 @@ adapter:
     execution:
         symbol: BTC-PERP
         url: http://api.testnet.emx.com
-
