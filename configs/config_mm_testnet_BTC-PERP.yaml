@@ -1,11 +1,11 @@
 logger:
     level: INFO
     name: mm_bot_logger_btc-perp
+    _path_to_file: /path/to/your/file.txt
 
 strategy:
     name: market_maker
     instrument_name: 'BTC-PERP'
-    logging_folder: 'path/to/your/logging/folder/'
 
     mid_price_based_calculation: False
     tick_size: 0.5
