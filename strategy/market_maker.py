@@ -1,5 +1,6 @@
 import time
 import traceback
+from enum import Enum
 
 from strategy.strategy_interface import StrategyInterface
 from orders_manager import OrdersManager
@@ -17,6 +18,11 @@ from definitions import (
     Position,
     OrderEliminationAcknowledgement,
 )
+
+
+class ActionType(Enum):
+    Nothing = 1
+    IgnoreReconnection = 2
 
 
 class MarketMaker(StrategyInterface):
@@ -53,6 +59,10 @@ class MarketMaker(StrategyInterface):
         self.user_asks = self.config.orders.asks
         self.user_bids = self.config.orders.bids
 
+        self.white_list = {
+            "post-only order would cross as non-maker": ActionType.IgnoreReconnection,
+        }
+
     def _load_configuration(self, cfg):
         option_names = (
             'instrument_name',
@@ -73,12 +83,18 @@ class MarketMaker(StrategyInterface):
         return not( not self.positional_retreat_increment and not self.positional_retreat_ticks)
 
     async def handle_exception(self, err_msg):
-        self.logger.error(f'handle_exception traceback: {err_msg}')
+        for whitelisted_msg in self.white_list.keys():
+            if whitelisted_msg in str(err_msg) and \
+                    self.white_list[whitelisted_msg] is ActionType.IgnoreReconnection:
+                self.logger.info(
+                    "Error was whitelisted, reconnection won't be performed. Err: {}".format(
+                        err_msg))
+                return
+
+        stack_str = traceback.format_exc()
+        self.logger.error("handle_exception traceback: {}".format(stack_str))
         for line in traceback.format_stack():
             self.logger.error(line.strip())
-
-        stack_str = traceback.format_stack()
-        self.logger.error(f'additional handle_exception traceback: {stack_str}')
 
         count = 0
         while count < 5:
