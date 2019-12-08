@@ -24,8 +24,8 @@ def setup_logging(cfg, app_name):
 
     if cfg.logger.path_to_file:
         logging.basicConfig(filename=cfg.logger.path_to_file, level=logging.WARNING)
-    else:
-        logging.basicConfig(level=logging.WARNING, handlers=[handler])
+    logging.getLogger().addHandler(handler)
+
     app_logger = logging.getLogger(app_name)
     app_logger.setLevel(cfg.logger.level)
     setLogger(app_logger)
