@@ -152,7 +152,7 @@ class OrdersManager:
             self.logger.debug('No need to send a bulk amend, no orders to be amended')
             return
 
-        new_place = sort_orders(new_orders)
+        new_orders = sort_orders(new_orders)
         existing_orders = sort_orders(existing_orders)
         if len([i for i, k in zip(new_orders, existing_orders) if i.side != k.side]) > 0:
             self.logger.error('Invalid orders for the amend')
@@ -167,7 +167,7 @@ class OrdersManager:
         try:
             new_bid = [order.price for order in new_orders if order.side is OrderSide.buy][-1]
             existing_ask = \
-            [order.price for order in existing_orders if order.side is OrderSide.sell][0]
+                [order.price for order in existing_orders if order.side is OrderSide.sell][0]
             if new_bid > existing_ask:
                 new_orders.reverse()
                 existing_orders.reverse()
