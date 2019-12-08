@@ -27,7 +27,7 @@ class ActionType(Enum):
 
 class MarketMaker(StrategyInterface):
     TIME_TO_WAIT_SINCE_START_SECS = 10
-    MAX_NUMBER_OF_ATTEMPTS_SECS = 5
+    MAX_NUMBER_OF_ATTEMPTS_SECS = 10
 
     def __init__(self, cfg, exchange_adapter):
         self.logger = logging.getLogger()
