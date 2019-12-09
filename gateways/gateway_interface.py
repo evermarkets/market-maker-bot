@@ -102,7 +102,7 @@ class GatewayInterface(abc.ABC):
                     raise Exception('Connection msg error was received')
             except Exception as e:
                 self.logger.warning(f'Exception raised: {e}')
-                raise Exception(f'Exception raised: {s}')
+                raise Exception(f'Exception raised: {e}')
             if msg.type == aiohttp.WSMsgType.text:
                 try:
                     msg = json.loads(msg.data)
