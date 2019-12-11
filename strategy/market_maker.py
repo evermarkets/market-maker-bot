@@ -80,7 +80,7 @@ class MarketMaker(StrategyInterface):
             setattr(self, option_name, option)
 
     def should_perform_positional_retreat(self):
-        return not( not self.positional_retreat_increment and not self.positional_retreat_ticks)
+        return not(not self.positional_retreat_increment and not self.positional_retreat_ticks)
 
     async def handle_exception(self, err_msg):
         for whitelisted_msg in self.white_list.keys():
@@ -181,9 +181,11 @@ class MarketMaker(StrategyInterface):
             self.logger.info(f'Received order rejection {update.__dict__}')
             raise Exception(f'Received order rejection {update.__dict__}')
         elif isinstance(update, OrderEliminationAcknowledgement):
-            self.logger.info(f'Received order elimination {update.__dict__}')
-            raise Exception(f'Received order elimination {update.__dict__}')
-
+            if update.order_id in self.orders_manager.ids_to_cancel_on_fill:
+                return
+            else:
+                self.logger.info(f'Received order elimination {update.__dict__}')
+                raise Exception(f'Received order elimination {update.__dict__}')
         try:
             self.orders_manager.update_order_state(update.order_id, update)
         except Exception as err:

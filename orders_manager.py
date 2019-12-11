@@ -57,7 +57,7 @@ class OrdersManager:
         self.live_orders_ids = []
         self.orders_states = {}
         self.order_id_to_order_id_map = {}
-        self.ids_to_fills = {}
+        self.ids_to_cancel_on_fill = []
 
         self.update_type_to_state = {
             NewOrderAcknowledgement: Event.on_insert_ack,
@@ -79,7 +79,7 @@ class OrdersManager:
         self.live_orders_ids = []
         self.orders_states = {}
         self.order_id_to_order_id_map = {}
-        self.ids_to_fills = {}
+        self.ids_to_cancel_on_fill = []
 
     async def place_order(self, order):
         if not order.order_id:
@@ -217,18 +217,11 @@ class OrdersManager:
                 self.logger.debug(f'Order status was not found. Order id {existing.order_id}')
 
             if isinstance(existing_state, Fill):
+                self.ids_to_cancel_on_fill.append(existing.order_id)
                 orders_to_place.append(new)
                 orders_ids_to_cancel.append(existing.order_id)
             elif isinstance(existing_state, Cancelled) or isinstance(existing_state, FullFill):
                 self.live_orders_ids.remove(existing.order_id)
-                try:
-                    del self.ids_to_fills[existing.order_id]
-                except KeyError:
-                    self.logger.info(f'Order {existing.order_id} was not found in ids_to_fills')
-                except Exception:
-                    self.logger.info(
-                        f'Order {existing.order_id} failed to be removed from ids_to_fills')
-
                 orders_to_place.append(new)
             elif isinstance(existing_state, Cancelled) or isinstance(existing_state, FullFill):
                 self.live_orders_ids.remove(existing.order_id)
@@ -332,11 +325,6 @@ class OrdersManager:
                         f'Inflight partial fill was detected.'
                         f' Recorded order {_order}, full_fill {upd_event}')
                     _upd_event = Event.on_fill
-        elif _upd_event == Event.on_fill:
-            try:
-                self.ids_to_fills[upd_event.order_id] = upd_event
-            except AttributeError:
-                pass
 
         try:
             curr_state.on_event(_upd_event)
@@ -386,7 +374,6 @@ class OrdersManager:
                 _fill.incremental_fill_qty = exchange_elem.filled_quantity
                 _fill.order_qty = exchange_elem.quantity
 
-                self.ids_to_fills[elem.order_id] = _fill
                 self.update_order_state(elem.order_id, Event.on_fill)
 
         return orders
