@@ -1,0 +1,32 @@
+logger:
+    level: # logging level
+    name: # logger name
+    path_to_file: # optional, if specified logging will be recorded there
+
+strategy:
+    name: # strategy name
+    instrument_name: # instrument name on EMX
+
+    send_post_only_orders: # if True, strategy will place post only limit orders
+    mid_price_based_calculation: # if True, strategy will calc order prices based on order book mid price
+    tick_size: # instrument tick size
+
+    positional_retreat:
+        position_increment:  # an increase/decrease in position by this amount will
+        retreat_ticks: # will lead to placing buy/sell orders further away (set both to 0 to disable)
+
+    orders:
+        asks: # array of asks orders (level, qty)
+        bids: # array of bids orders (level, qty)
+
+    stop_strategy_on_error: # if True, strategy will be stopped on any error
+
+adapter:
+    api_key: # your emx api key
+    api_secret: # your emx secret key
+    streaming:
+        symbol: # symbol you are willing to trade from emx
+        url: # emx url, trade or testnet
+    execution:
+        symbol: # symbol you are willing to trade from emx
+        url: # emx url, trade or testnet
