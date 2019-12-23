@@ -6,9 +6,9 @@ strategy:
     name: market_maker
     instrument_name: 'ETH-BTC'
 
+    send_post_only_orders: True
     mid_price_based_calculation: False
     tick_size: 0.000001
-    price_rounding: 6
 
     positional_retreat:
         position_increment: null

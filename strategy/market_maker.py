@@ -1,4 +1,5 @@
 import time
+import decimal
 import traceback
 from enum import Enum
 
@@ -52,6 +53,8 @@ class MarketMaker(StrategyInterface):
         self.active = True
         self.current_position = None
         self.num_of_sent_orders = 0
+        self.price_rounding = self.get_rounding(self.tick_size)
+
         self.cancel_all_request_was_sent = False
         self.positional_retreat_increment = self.positional_retreat.position_increment
         self.positional_retreat_ticks = self.positional_retreat.retreat_ticks
@@ -78,6 +81,10 @@ class MarketMaker(StrategyInterface):
                 self.logger.error(f'{option_name} was not found')
                 raise Exception(f'{option_name} was not found')
             setattr(self, option_name, option)
+
+    @staticmethod
+    def get_rounding(tick):
+        return abs(decimal.Decimal(str(tick)).as_tuple().exponent)
 
     def should_perform_positional_retreat(self):
         return not(not self.positional_retreat_increment and not self.positional_retreat_ticks)

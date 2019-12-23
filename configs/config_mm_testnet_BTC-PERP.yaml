@@ -7,9 +7,9 @@ strategy:
     name: market_maker
     instrument_name: 'BTC-PERP'
 
+    send_post_only_orders: True
     mid_price_based_calculation: False
     tick_size: 0.5
-    price_rounding: 4
 
     positional_retreat:
         position_increment: 0.03
@@ -17,12 +17,12 @@ strategy:
 
     orders:
         asks: [
-                [2, 0.01],
+                [1, 0.01],
                 [3, 0.02],
                 [5, 0.03],
               ]
         bids: [
-                [2, 0.01],
+                [1, 0.01],
                 [3, 0.02],
                 [5, 0.03],
               ]
