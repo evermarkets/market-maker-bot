@@ -21,6 +21,7 @@ class ExecutionAdapter:
         self.ws = ws
         self.shared_storage = shared_storage
         self.auth = auth
+        self.send_post_only_orders = True
 
         self.headers = {
             'content-type': 'application/json'
@@ -92,7 +93,6 @@ class ExecutionAdapter:
 
         data = []
         for order in orders:
-            side = ''
             if order.side == OrderSide.buy:
                 side = 'buy'
             elif order.side == OrderSide.sell:
@@ -100,7 +100,6 @@ class ExecutionAdapter:
             else:
                 raise Exception(f'Unknown order side. Type = {order.side}')
 
-            ord_type = ''
             if order.type == OrderType.mkt:
                 ord_type = 'market'
             elif order.type == OrderType.limit:
@@ -117,7 +116,8 @@ class ExecutionAdapter:
             }
             if order.type == OrderType.limit:
                 body['price'] = str(order.price)
-                body['post_only'] = True
+                if self.send_post_only_orders:
+                    body['post_only'] = True
             data.append(body)
 
         final_data = {
@@ -146,7 +146,6 @@ class ExecutionAdapter:
                 f'Order id was not found for amend. Order id = {old_order.order_id}')
             return res
 
-        ord_type = ''
         if new_order.type == OrderType.mkt:
             ord_type = 'market'
         elif new_order.type == OrderType.limit:
@@ -157,7 +156,6 @@ class ExecutionAdapter:
         if new_order.side != old_order.side:
             raise Exception(f'Wrong order side. Side = {new_order.side}')
 
-        side = ''
         if new_order.side == OrderSide.buy:
             side = 'buy'
         elif new_order.side == OrderSide.sell:
@@ -210,7 +208,6 @@ class ExecutionAdapter:
                     f'Order id was not found for amend. Order id = {old_order.order_id}')
                 return res
 
-            ord_type = ''
             if new_order.type == OrderType.mkt:
                 ord_type = 'market'
             elif new_order.type == OrderType.limit:
@@ -221,7 +218,6 @@ class ExecutionAdapter:
             if new_order.side != old_order.side:
                 raise Exception(f'Wrong order side. Side = {new_order.side}')
 
-            side = ''
             if new_order.side == OrderSide.buy:
                 side = 'buy'
             elif new_order.side == OrderSide.sell:
@@ -263,7 +259,6 @@ class ExecutionAdapter:
     async def send_order(self, order):
         res = ApiResult()
 
-        side = ''
         if order.side == OrderSide.buy:
             side = 'buy'
         elif order.side == OrderSide.sell:
@@ -271,7 +266,6 @@ class ExecutionAdapter:
         else:
             raise Exception(f'Unknown order side. Type = {order.side}')
 
-        ord_type = ''
         if order.type == OrderType.mkt:
             ord_type = 'market'
         elif order.type == OrderType.limit:
@@ -288,6 +282,8 @@ class ExecutionAdapter:
         }
         if order.type == OrderType.limit:
             body['price'] = str(order.price)
+            if self.send_post_only_orders:
+                body['post_only'] = True
 
         final_data = {
             'channel': 'trading',

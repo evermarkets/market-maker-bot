@@ -22,6 +22,8 @@ class EmxAdapter(GatewayInterface):
                                           self.websocket, self.storage)
         self.streaming = StreamingAdapter(self.config.streaming, self.auth, self.storage)
 
+        self.execution.send_post_only_orders = self.send_post_only_orders
+
     def set_order_update_callback(self, msg_callback):
         self.msg_callback = msg_callback
 

@@ -14,6 +14,7 @@ class GatewayInterface(abc.ABC):
         self.stop = False
         self.last_hb_time = time.time()
         self.cancel_orders_on_start = False
+        self.send_post_only_orders = True
 
         self.started = False
         self.reconnecting = False
