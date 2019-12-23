@@ -38,7 +38,7 @@ class MarketMaker(StrategyInterface):
         self.config = cfg
         self.exchange_adapter = exchange_adapter
         self.exchange_adapter.set_order_update_callback(self.on_market_update)
-        self.exchange_adapter.send_post_only_orders = self.send_post_only_orders
+        self.exchange_adapter.update_post_only_flag(self.send_post_only_orders)
         self.orders_manager = OrdersManager(self.exchange_adapter)
 
         self.process_orders_on_start = False
@@ -72,7 +72,6 @@ class MarketMaker(StrategyInterface):
             'instrument_name',
             'mid_price_based_calculation',
             'tick_size',
-            'price_rounding',
             'stop_strategy_on_error',
             'positional_retreat',
             'send_post_only_orders'
