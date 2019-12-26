@@ -4,8 +4,8 @@ import json
 import aiohttp
 import asyncio
 
-from definitions import ApiResult
-from logger import logging
+from market_maker.definitions import ApiResult
+from market_maker.logger import logging
 
 
 class GatewayInterface(abc.ABC):

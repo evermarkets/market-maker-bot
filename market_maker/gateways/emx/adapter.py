@@ -1,12 +1,12 @@
 import asyncio
 
-from websocket_client import WebsocketClient
+from market_maker.websocket_client import WebsocketClient
 
-from gateways.gateway_interface import GatewayInterface
-from gateways.emx.execution import ExecutionAdapter
-from gateways.emx.streaming import StreamingAdapter
-from gateways.emx.shared_storage import SharedStorage
-from gateways.emx.authentication import Authentication
+from market_maker.gateways.gateway_interface import GatewayInterface
+from market_maker.gateways.emx.execution import ExecutionAdapter
+from market_maker.gateways.emx.streaming import StreamingAdapter
+from market_maker.gateways.emx.shared_storage import SharedStorage
+from market_maker.gateways.emx.authentication import Authentication
 
 
 class EmxAdapter(GatewayInterface):

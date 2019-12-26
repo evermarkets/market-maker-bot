@@ -1,8 +1,8 @@
 import time
 import datetime
 
-from logger import logging
-from definitions import (
+from market_maker.logger import logging
+from market_maker.definitions import (
     TopOfBook,
     ExchangeOrders,
     ExchangeOrder,

@@ -3,7 +3,7 @@ import json
 import asyncio
 import aiohttp
 
-from logger import logging
+from .logger import logging
 
 
 class WebsocketClient:

@@ -29,8 +29,8 @@ strategy:
     stop_strategy_on_error: False
 
 adapter:
-    api_key: ''
-    api_secret: ''
+    api_key: '03b2014f-e416-47cd-be4c-728cbc336a6e'
+    api_secret: 'L4CkbCiduoi5kKtB391RokuNH76BLGvFatCZQYkC3s6PWYEsm1Bj/50UKhb878sehrVfHTJ6OSlfov0iVG1yQw=='
     streaming:
         symbol: ETH-BTC
         url: wss://api.testnet.emx.com

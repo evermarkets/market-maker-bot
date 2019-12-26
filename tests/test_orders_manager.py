@@ -1,23 +1,14 @@
-import json
 import pytest
-import datetime
 from munch import DefaultMunch
 
-from orders_manager import OrdersManager
-from gateways import gateway_interface
+from market_maker.orders_manager import OrdersManager
+from market_maker.gateways import gateway_interface
 
-from definitions import (
+from market_maker.definitions import (
     ApiResult,
     OrderRequest,
     OrderType,
     OrderSide,
-    ExchangeOrders,
-    NewOrderAcknowledgement,
-    NewOrderRejection,
-    OrderEliminationAcknowledgement,
-    OrderEliminationRejection,
-    OrderFillAcknowledgement,
-    OrderFullFillAcknowledgement,
 )
 
 

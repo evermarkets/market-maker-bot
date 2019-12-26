@@ -1,10 +1,10 @@
 import asyncio
 import traceback
 
-from strategy.market_maker import MarketMaker
-from gateways.emx.adapter import EmxAdapter
+from .strategy.market_maker import MarketMaker
+from .gateways.emx.adapter import EmxAdapter
 
-from logger import logging
+from .logger import logging
 
 strategies_factory = {
     'market_maker': MarketMaker,

@@ -1,12 +1,11 @@
-import sys
 import yaml
 import json
 import argparse
 
 from munch import DefaultMunch
 
-from logger.logging import setup_logging
-from engine import Engine
+from market_maker.logger.logging import setup_logging
+from market_maker.engine import Engine
 
 import logging
 
@@ -24,8 +23,8 @@ def get_config():
     args = parser.parse_args()
     filename = args.config
 
-    with open(filename, 'r') as ymlfile:
-        cfg_dict = yaml.load(ymlfile)
+    with open(filename, 'r') as yaml_file:
+        cfg_dict = yaml.load(yaml_file)
         return DefaultMunch.fromDict(cfg_dict, None)
 
 

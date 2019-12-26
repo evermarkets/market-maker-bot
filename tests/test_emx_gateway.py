@@ -1,16 +1,10 @@
-import json
 import pytest
-import datetime
 from munch import DefaultMunch
 
-from gateways.emx import streaming, execution
-from gateways.emx.shared_storage import SharedStorage
+from market_maker.gateways.emx import streaming
+from market_maker.gateways.emx.shared_storage import SharedStorage
 
-from definitions import (
-    NewOrderAcknowledgement,
-    NewOrderRejection,
-    OrderEliminationAcknowledgement,
-    OrderEliminationRejection,
+from market_maker.definitions import (
     OrderFillAcknowledgement,
     OrderFullFillAcknowledgement,
 )

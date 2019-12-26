@@ -1,23 +1,15 @@
-import json
 import pytest
-import datetime
 from munch import DefaultMunch
 
-from strategy.market_maker import MarketMaker
-from gateways import gateway_interface
+from market_maker.strategy.market_maker import MarketMaker
+from market_maker.gateways import gateway_interface
 
-from definitions import (
+from market_maker.definitions import (
     TopOfBook,
-    NewOrderAcknowledgement,
-    NewOrderRejection,
-    OrderEliminationAcknowledgement,
-    OrderEliminationRejection,
-    OrderFillAcknowledgement,
-    OrderFullFillAcknowledgement,
 )
 
 
-class BittestStorage():
+class BittestStorage:
     def __init__(self):
         self.uid_to_eid = {}
         self.eid_to_uid = {}
@@ -37,6 +29,10 @@ class BittestAdapter(gateway_interface.GatewayInterface):
         self.orders_cancelled = 0
         self.amend_orders_data = []
         self.new_orders_data = []
+        self.send_post_only_orders = False
+
+    def update_post_only_flag(self, post_only_flag):
+        self.send_post_only_orders = post_only_flag
 
     def set_order_update_callback(self, callback):
         pass
@@ -113,6 +109,7 @@ def cfg_strategy_fixture():
     b.name = "market_maker"
     b.instrument_name = "TEST-PERP"
     b.mid_price_based_calculation = False
+    b.send_post_only_orders = True
 
     b.tick_size = 1
     b.price_rounding = 2

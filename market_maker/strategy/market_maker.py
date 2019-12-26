@@ -3,12 +3,12 @@ import decimal
 import traceback
 from enum import Enum
 
-from strategy.strategy_interface import StrategyInterface
-from orders_manager import OrdersManager
+from market_maker.strategy.strategy_interface import StrategyInterface
+from market_maker.orders_manager import OrdersManager
 
-from logger import logging
+from market_maker.logger import logging
 
-from definitions import (
+from market_maker.definitions import (
     TopOfBook,
     OrderRequest,
     OrderType,

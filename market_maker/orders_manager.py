@@ -1,6 +1,6 @@
 import uuid
 
-from order_state import (
+from .order_state import (
     Event,
     Active,
     Fill,
@@ -14,7 +14,7 @@ from order_state import (
     CancelFailed,
 )
 
-from definitions import (
+from .definitions import (
     OrderSide,
     OrderRequest,
     ExchangeOrders,
@@ -29,7 +29,7 @@ from definitions import (
     AmendAcknowledgementPartial
 )
 
-from logger import logging
+from .logger import logging
 
 
 def generate_id():

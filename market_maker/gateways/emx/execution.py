@@ -2,9 +2,9 @@ import time
 import json
 import aiohttp
 
-from definitions import ApiResult, OrderType, OrderSide, ExchangeOrders, ExchangeOrder
+from market_maker.definitions import ApiResult, OrderType, OrderSide, ExchangeOrders, ExchangeOrder
 
-from logger import logging
+from market_maker.logger import logging
 
 
 def get_timestamp():
